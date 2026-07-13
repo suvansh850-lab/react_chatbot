@@ -47,7 +47,7 @@ const Login = () => {
             <div className="login-brand">
                 <div className="login-brand-icon">🤖</div>
                 <h1>Morepen AI</h1>
-                <p>Internal analytics assistant for Morepen employees</p>
+                <p>Analytics assistant for Morepen employees</p>
                 <div className="login-brand-tagline">
                     🔒 Restricted access — authorized personnel only. Query internal organizational data securely.
                 </div>
@@ -57,7 +57,7 @@ const Login = () => {
             <div className="login-form-panel">
                 <div className="login-card">
                     <div className="login-card-header">
-                        <h2>Welcome back</h2>
+                        <h2>Welcome</h2>
                         <p>Sign in to continue to Morepen Analyst Chatbot</p>
                     </div>
 
