@@ -1,0 +1,46 @@
+const { Pool } = require("pg");
+require("dotenv").config();
+
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
+
+// Automatically initialize database tables
+const initDb = async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS conversations (
+        id VARCHAR(50) PRIMARY KEY,
+        user_id VARCHAR(100),
+        title TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await pool.query(`
+      ALTER TABLE conversations ADD COLUMN IF NOT EXISTS user_id VARCHAR(100);
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        conversation_id VARCHAR(50) REFERENCES conversations(id) ON DELETE CASCADE,
+        role VARCHAR(20) NOT NULL,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log("📁 Database tables initialized successfully.");
+  } catch (err) {
+    console.error("❌ Error initializing database tables:", err.message);
+  }
+};
+
+initDb();
+
+module.exports = pool;

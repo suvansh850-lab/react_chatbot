@@ -1,0 +1,130 @@
+/* Register.css — Morepen chatbot design system */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  background: #f4f4f4;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+}
+
+.register-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 44px 40px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 4px 24px rgba(109, 79, 194, 0.08);
+  border: 1px solid #ececf1;
+  text-align: center;
+}
+
+.register-card h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #6D4FC2;
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+}
+
+.register-card > p {
+  color: #888;
+  font-size: 0.92rem;
+  margin: 0 0 28px;
+}
+
+.register-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+
+.register-card input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #e1e1e1;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  outline: none;
+  color: #2c2c2c;
+  background: #f9f9f9;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-sizing: border-box;
+}
+
+.register-card input:focus {
+  border-color: #6D4FC2;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(109, 79, 194, 0.12);
+}
+
+.register-card input::placeholder {
+  color: #b0b0b0;
+}
+
+.register-btn {
+  width: 100%;
+  padding: 13px;
+  background: #6D4FC2;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 12px rgba(109, 79, 194, 0.25);
+}
+
+.register-btn:hover {
+  background: #593bab;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(109, 79, 194, 0.3);
+}
+
+.register-btn:active {
+  transform: translateY(0);
+}
+
+.register-btn:disabled {
+  background: #bfaee3;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.register-card .bottom-text {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 0.88rem;
+  color: #888;
+}
+
+.register-card .bottom-text a {
+  color: #6D4FC2;
+  text-decoration: none;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.register-card .bottom-text a:hover {
+  text-decoration: underline;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .register-card {
+    padding: 28px 20px;
+    border-radius: 14px;
+  }
+
+  .register-card h1 {
+    font-size: 1.6rem;
+  }
+}
