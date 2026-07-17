@@ -115,6 +115,57 @@ const Chatbot = () => {
     }
   };
 
+  const renameChat = async (chatId, newTitle) => {
+    setChats(prev => prev.map(c => c.id === chatId ? { ...c, title: newTitle } : c));
+
+    if (user?.id) {
+      try {
+        const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/chat";
+        await fetch(`${backendUrl}/conversations/${chatId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: newTitle })
+        });
+      } catch (err) {
+        console.error("Failed to rename conversation:", err);
+      }
+    }
+  };
+
+  const deleteChat = async (chatId) => {
+    const updatedChats = chats.filter(c => c.id !== chatId);
+    let newActiveId = activeChatId;
+
+    if (activeChatId === chatId) {
+      if (updatedChats.length > 0) {
+        newActiveId = updatedChats[0].id;
+      } else {
+        const initialChatId = Date.now().toString();
+        updatedChats.push({
+          id: initialChatId,
+          title: "New Chat",
+          history: [{ hideInChat: true, role: "model", text: CompanyInfo }],
+          loaded: true
+        });
+        newActiveId = initialChatId;
+      }
+    }
+
+    setChats(updatedChats);
+    setActiveChatId(newActiveId);
+
+    if (user?.id) {
+      try {
+        const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/chat";
+        await fetch(`${backendUrl}/conversations/${chatId}`, {
+          method: "DELETE"
+        });
+      } catch (err) {
+        console.error("Failed to delete conversation:", err);
+      }
+    }
+  };
+
   // ── History helpers ──────────────────────────────────────────
   const setChatHistory = (updater) => {
     setChats(prev => prev.map(chat => {
@@ -204,6 +255,8 @@ const Chatbot = () => {
         isSidebarOpen={isSidebarOpen}
         onLogout={handleLogout}
         loggingOut={loggingOut}
+        renameChat={renameChat}
+        deleteChat={deleteChat}
       />
 
       <div className="chatbot-popup">

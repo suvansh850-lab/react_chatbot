@@ -109,8 +109,51 @@ async function getMessages(req, res) {
   }
 }
 
+async function renameConversation(req, res) {
+  const { id } = req.params;
+  const { title } = req.body;
+  try {
+    await db.query(
+      "UPDATE conversations SET title = $1 WHERE id = $2",
+      [title, id]
+    );
+    return res.json({
+      success: true,
+      message: "Conversation renamed successfully"
+    });
+  } catch (error) {
+    console.error("Failed to rename conversation:", error.message);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+}
+
+async function deleteConversation(req, res) {
+  const { id } = req.params;
+  try {
+    await db.query(
+      "DELETE FROM conversations WHERE id = $1",
+      [id]
+    );
+    return res.json({
+      success: true,
+      message: "Conversation deleted successfully"
+    });
+  } catch (error) {
+    console.error("Failed to delete conversation:", error.message);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   handleChat,
   getConversations,
-  getMessages
+  getMessages,
+  renameConversation,
+  deleteConversation
 };
