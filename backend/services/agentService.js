@@ -67,7 +67,8 @@ Use the 'get_current_datetime' tool if the user asks about dates or times relati
         }));
 
         // Append the AI message indicating tool calls to the conversational array
-        currentMessages.push(response);
+        const responseContent = response?.content ?? response?.message?.content ?? "";
+        currentMessages.push(new AIMessage(responseContent));
 
         for (const toolCall of response.tool_calls) {
           const tool = tools.find((t) => t.name === toolCall.name);
@@ -98,11 +99,12 @@ Use the 'get_current_datetime' tool if the user asks about dates or times relati
         step++;
       } else {
         // No tool calls requested: this is the final user-facing response
+        const finalContent = response?.content ?? response?.message?.content ?? "";
         return {
           choices: [
             {
               message: {
-                content: response.content,
+                content: finalContent,
               },
             },
           ],
