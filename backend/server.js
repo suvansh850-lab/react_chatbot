@@ -48,6 +48,7 @@ app.get("/api/test-db", async (req, res) => {
 // Chat APIs
 // ============================
 app.use("/api/chat", chatRoutes);
+app.use("/api/share", require("./routes/shareRoutes"));
 
 // ============================
 // 404 Route

@@ -194,7 +194,7 @@ const Chatbot = () => {
     if (systemMessage) {
       messages.push({
         role: "system",
-        content: `You are a customer support chatbot for Morepen.\nYou must ONLY answer questions based on the Company Information provided below.\nIf the user asks a question that cannot be answered using the provided Company Information, or asks for general/external knowledge, you must politely decline to answer, stating that you only have information regarding Morepen.\n\nCompany Information:\n${systemMessage.text}`
+        content: `You are a helpful AI assistant. You can answer questions about the company Dr. Morepen, and also assist the user with any files they have uploaded in this conversation.\n\nCompany Information:\n${systemMessage.text}`
       });
     }
 
@@ -244,6 +244,56 @@ const Chatbot = () => {
     }
   };
 
+  const shareCurrentChat = async () => {
+    if (!activeChat) {
+      alert("No active chat to share.");
+      return;
+    }
+
+    const visibleHistory = activeChat.history.filter(message => !message.hideInChat);
+    if (visibleHistory.length === 0) {
+      alert("This chat has no messages to share.");
+      return;
+    }
+
+    const apiRoot = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/api\/chat\/?$/, "").replace(/\/$/, "");
+
+    try {
+      const response = await fetch(`${apiRoot}/api/share/${activeChatId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: activeChat.title,
+          messages: visibleHistory,
+          userId: user?.id
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Could not create share link.");
+      }
+
+      const shareUrl = data.data.url;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      }
+
+      if (navigator.share) {
+        await navigator.share({
+          title: activeChat.title,
+          text: shareUrl,
+          url: shareUrl
+        });
+      }
+
+      alert(`Share link created and copied to clipboard:\n${shareUrl}`);
+    } catch (err) {
+      console.error("Share failed:", err);
+      alert(err.message || "Unable to create share link right now. Please try again.");
+    }
+  };
+
   // ── Render ───────────────────────────────────────────────────
   return (
     <div className="container">
@@ -272,6 +322,13 @@ const Chatbot = () => {
             <ChatBotIcon />
             <h2 className="logo-text">Morepen Analyst Chatbot</h2>
           </div>
+          <button
+            className="share-chat-btn material-symbols-outlined"
+            onClick={shareCurrentChat}
+            title="Share chat"
+          >
+            share
+          </button>
         </div>
 
         {/* Chat body */}

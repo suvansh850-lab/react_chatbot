@@ -35,6 +35,25 @@ const initDb = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS conversation_files (
+        id SERIAL PRIMARY KEY,
+        conversation_id VARCHAR(50) REFERENCES conversations(id) ON DELETE CASCADE,
+        file_name VARCHAR(255) NOT NULL,
+        file_content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS shared_chats (
+        id VARCHAR(50) PRIMARY KEY,
+        conversation_id VARCHAR(50) REFERENCES conversations(id) ON DELETE CASCADE,
+        share_token VARCHAR(100) UNIQUE NOT NULL,
+        title TEXT,
+        payload JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
     console.log("📁 Database tables initialized successfully.");
   } catch (err) {
     console.error("❌ Error initializing database tables:", err.message);

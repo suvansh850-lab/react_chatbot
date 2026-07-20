@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Chatbot from './pages/Chatbot';
+import ShareChat from './pages/ShareChat';
 
 const RootRoute = () => {
   const { user, loading } = useAuth();
@@ -32,6 +33,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<RootRoute />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/share/:token" element={<ShareChat />} />
           <Route path="/login" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>

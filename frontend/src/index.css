@@ -13,7 +13,8 @@ body {
   padding: 0;
   min-height: 100vh;
   background: #f4f4f4;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .container {
@@ -89,6 +90,10 @@ body {
 
 .chat-header button:hover {
   background: #593bab;
+}
+
+.share-chat-btn {
+  border: 1px solid rgba(255, 255, 255, 0.28);
 }
 
 .chat-body {
@@ -199,4 +204,90 @@ body {
 
 .chat-footer .chat-form button:active {
   transform: scale(0.95);
+}
+
+.share-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #f4f4f4;
+}
+
+.share-card {
+  width: 100%;
+  max-width: 820px;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.share-header {
+  padding: 32px 36px 0;
+}
+
+.share-header h1 {
+  margin: 0 0 10px;
+  font-size: 2rem;
+  color: #1f1f1f;
+}
+
+.share-subtitle {
+  margin: 0;
+  color: #5c5c5c;
+  font-size: 0.98rem;
+}
+
+.share-body {
+  padding: 24px 36px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.share-message {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.share-message.bot {
+  flex-direction: row;
+}
+
+.share-message.user {
+  flex-direction: row-reverse;
+}
+
+.share-message-text {
+  max-width: 100%;
+  padding: 18px 22px;
+  border-radius: 22px;
+  background: #f6f2ff;
+  color: #1f1f1f;
+  box-shadow: 0 8px 24px rgba(109, 79, 194, 0.08);
+  line-height: 1.6;
+}
+
+.share-message.user .share-message-text {
+  background: #6d4fc2;
+  color: #fff;
+}
+
+.button-link {
+  display: inline-flex;
+  margin: 0 36px 32px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  text-decoration: none;
+  background: #6d4fc2;
+  color: #fff;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.button-link:hover {
+  background: #593bab;
 }

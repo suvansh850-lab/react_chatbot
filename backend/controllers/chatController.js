@@ -1,4 +1,4 @@
-const groqService = require("../services/groqService");
+const agentService = require("../services/agentService");
 const db = require("../database/db");
 
 async function handleChat(req, res) {
@@ -12,8 +12,8 @@ async function handleChat(req, res) {
       });
     }
 
-    // Call Groq Service
-    const completion = await groqService.generateChatCompletion(messages);
+    // Call LangChain Agent Service
+    const completion = await agentService.runAgent(messages, conversationId);
     
     // Extract reply text
     const botResponseText = completion.choices[0].message.content;
