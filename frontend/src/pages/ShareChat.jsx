@@ -11,6 +11,15 @@ const ShareChat = () => {
 
   const location = useLocation();
 
+  const getBackendRoot = () => {
+    if (import.meta.env.VITE_API_URL) {
+      const trimmed = import.meta.env.VITE_API_URL.replace(/\/$/, "");
+      return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
+    }
+
+    return `${window.location.origin}/api`;
+  };
+
   useEffect(() => {
     const fetchSharedConversation = async () => {
       setLoading(true);
@@ -41,8 +50,8 @@ const ShareChat = () => {
       }
 
       try {
-        const apiRoot = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, "") : window.location.origin;
-        const response = await fetch(`${apiRoot}/api/share/${token}`);
+        const apiRoot = getBackendRoot();
+        const response = await fetch(`${apiRoot}/share/${token}`);
         let data;
         try {
           data = await response.json();
