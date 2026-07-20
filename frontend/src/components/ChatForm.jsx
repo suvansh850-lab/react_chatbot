@@ -19,7 +19,12 @@ const ChatForm = ({ chatHistory, setChatHistory, generateBotResponse }) => {
                 type="text" 
                 placeholder="Type your message..." 
                 className="chat-input" 
-                ref={inputRef} 
+                ref={inputRef}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                name="chat-message"
                 required 
             />
             <button className="material-symbols-rounded">
