@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import ChatMessage from '../components/ChatMessage';
 import ChatBotIcon from '../components/ChatBotIcon';
 
@@ -9,10 +9,36 @@ const ShareChat = () => {
   const [error, setError] = useState(null);
   const [conversation, setConversation] = useState(null);
 
+  const location = useLocation();
+
   useEffect(() => {
     const fetchSharedConversation = async () => {
       setLoading(true);
       setError(null);
+
+      const queryData = new URLSearchParams(location.search).get('data');
+      if (queryData) {
+        try {
+          const decoded = decodeURIComponent(escape(atob(decodeURIComponent(queryData))));
+          const payload = JSON.parse(decoded);
+          if (!payload?.messages || !Array.isArray(payload.messages)) {
+            throw new Error('Invalid shared conversation payload.');
+          }
+          setConversation(payload);
+          return;
+        } catch (err) {
+          setError('Invalid shared conversation data.');
+          return;
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      if (!token) {
+        setError('No shared chat token or data present.');
+        setLoading(false);
+        return;
+      }
 
       try {
         const apiRoot = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, "") : window.location.origin;
@@ -38,7 +64,7 @@ const ShareChat = () => {
     };
 
     fetchSharedConversation();
-  }, [token]);
+  }, [token, location.search]);
 
   if (loading) {
     return (

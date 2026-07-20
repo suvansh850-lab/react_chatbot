@@ -33,6 +33,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<RootRoute />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/share" element={<ShareChat />} />
           <Route path="/share/:token" element={<ShareChat />} />
           <Route path="/login" element={<Navigate to="/" replace />} />
         </Routes>

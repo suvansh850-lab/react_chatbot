@@ -16,14 +16,12 @@ const getBackendRoot = () => {
     return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
   }
 
-  const isLocalhost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-  if (isLocalhost) {
-    return `${window.location.origin}/api`;
-  }
+  return `${window.location.origin}/api`;
+};
 
-  throw new Error(
-    "Backend URL is not configured. Please set VITE_API_URL to your deployed backend URL in production."
-  );
+const buildClientShareUrl = (payload) => {
+  const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(payload)))));
+  return `${window.location.origin}/share?data=${encoded}`;
 };
 
 const Chatbot = () => {
@@ -272,6 +270,11 @@ const Chatbot = () => {
       return;
     }
 
+    const fallbackPayload = {
+      title: activeChat.title,
+      messages: visibleHistory
+    };
+
     try {
       const apiRoot = getBackendRoot();
       const response = await fetch(`${apiRoot}/share/${activeChatId}`, {
@@ -294,9 +297,7 @@ const Chatbot = () => {
 
       if (!response.ok || !data.success) {
         const baseError = data?.error || `Could not create share link. HTTP ${response.status}`;
-        throw new Error(
-          `${baseError} Please verify that your backend is deployed and VITE_API_URL points to the backend host.`
-        );
+        throw new Error(baseError);
       }
 
       const shareUrl = data.data.url;
@@ -313,10 +314,16 @@ const Chatbot = () => {
       }
 
       alert(`Share link created and copied to clipboard:\n${shareUrl}`);
+      return;
     } catch (err) {
-      console.error("Share failed:", err);
-      alert(err.message || "Unable to create share link right now. Please try again.");
+      console.warn("Backend share failed, falling back to client-side share:", err);
     }
+
+    const fallbackUrl = buildClientShareUrl(fallbackPayload);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(fallbackUrl);
+    }
+    alert(`Backend share failed, but a client-side share link was created instead:\n${fallbackUrl}`);
   };
 
   // ── Render ───────────────────────────────────────────────────
