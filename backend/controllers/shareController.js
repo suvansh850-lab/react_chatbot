@@ -31,29 +31,44 @@ async function createShareLink(req, res) {
         "INSERT INTO conversations (id, title, user_id) VALUES ($1, $2, $3)",
         [conversationId, title || "Shared Chat", userId || null]
       );
+    } else {
+      await db.query(
+        "UPDATE conversations SET title = $1 WHERE id = $2",
+        [title || "Shared Chat", conversationId]
+      );
+      await db.query(
+        "DELETE FROM messages WHERE conversation_id = $1",
+        [conversationId]
+      );
+    }
 
-      if (Array.isArray(messages) && messages.length > 0) {
-        const insertMessage = async (message) => {
+    if (Array.isArray(messages) && messages.length > 0) {
+      for (const message of messages) {
+        if (message.text && (message.role === "user" || message.role === "model")) {
           const role = message.role === "model" ? "assistant" : "user";
           await db.query(
             "INSERT INTO messages (conversation_id, role, content) VALUES ($1, $2, $3)",
             [conversationId, role, message.text]
           );
-        };
-
-        for (const message of messages) {
-          if (message.text && (message.role === "user" || message.role === "model")) {
-            await insertMessage(message);
-          }
         }
       }
     }
 
-    const shareToken = randomUUID();
-    await db.query(
-      "INSERT INTO shared_chats (id, conversation_id, share_token) VALUES ($1, $2, $3)",
-      [randomUUID(), conversationId, shareToken]
+    const existingShare = await db.query(
+      "SELECT share_token FROM shared_chats WHERE conversation_id = $1 LIMIT 1",
+      [conversationId]
     );
+
+    let shareToken;
+    if (existingShare.rowCount > 0) {
+      shareToken = existingShare.rows[0].share_token;
+    } else {
+      shareToken = randomUUID();
+      await db.query(
+        "INSERT INTO shared_chats (id, conversation_id, share_token) VALUES ($1, $2, $3)",
+        [randomUUID(), conversationId, shareToken]
+      );
+    }
 
     const frontendUrl = getFrontendUrl(req);
 
@@ -67,7 +82,7 @@ async function createShareLink(req, res) {
     console.error("Create share link failed:", error.message);
     return res.status(500).json({
       success: false,
-      error: error.message
+      error: "Failed to create share link"
     });
   }
 }
@@ -123,7 +138,7 @@ async function getSharedConversation(req, res) {
     console.error("Get shared conversation failed:", error.message);
     return res.status(500).json({
       success: false,
-      error: error.message
+      error: "Failed to fetch shared conversation"
     });
   }
 }

@@ -306,11 +306,14 @@ const Chatbot = () => {
       }
 
       if (navigator.share) {
-        await navigator.share({
-          title: activeChat.title,
-          text: shareUrl,
-          url: shareUrl
-        });
+        try {
+          await navigator.share({
+            title: activeChat.title,
+            url: shareUrl
+          });
+        } catch (shareErr) {
+          // User cancelled native share dialog — not an error
+        }
       }
 
       alert(`Share link created and copied to clipboard:\n${shareUrl}`);
