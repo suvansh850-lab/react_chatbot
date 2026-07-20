@@ -293,7 +293,10 @@ const Chatbot = () => {
       }
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || `Could not create share link. HTTP ${response.status}`);
+        const baseError = data?.error || `Could not create share link. HTTP ${response.status}`;
+        throw new Error(
+          `${baseError} Please verify that your backend is deployed and VITE_API_URL points to the backend host.`
+        );
       }
 
       const shareUrl = data.data.url;
