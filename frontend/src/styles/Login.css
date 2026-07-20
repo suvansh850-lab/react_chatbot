@@ -224,6 +224,17 @@
 }
 
 /* ─── Responsive: collapse brand panel on small screens ─── */
+@media (max-width: 1024px) {
+  .login-brand {
+    width: 280px;
+    padding: 36px 28px;
+  }
+
+  .login-brand h1 {
+    font-size: 1.4rem;
+  }
+}
+
 @media (max-width: 720px) {
   .login-page {
     flex-direction: column;

@@ -261,3 +261,55 @@
 .sidebar-logout-btn .material-symbols-outlined {
   font-size: 16px;
 }
+
+/* ── Tablet ── */
+@media (max-width: 1024px) {
+  .sidebar-header h2 {
+    font-size: 0.95rem;
+  }
+
+  .new-chat-btn {
+    font-size: 13px;
+    padding: 9px 12px;
+  }
+
+  .history-item {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+}
+
+/* ── Phone: sidebar as slide-over drawer ── */
+@media (max-width: 767px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 200;
+    width: min(86vw, 300px);
+    height: 100dvh;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transform: translateX(0);
+  }
+
+  .sidebar.collapsed {
+    width: min(86vw, 300px);
+    transform: translateX(-105%);
+    border-right-color: #ececf1;
+    box-shadow: none;
+  }
+
+  .sidebar-header {
+    height: 60px;
+    padding: 0 16px;
+  }
+
+  .sidebar-content {
+    padding: 14px 10px;
+  }
+
+  .history-item .action-buttons {
+    opacity: 1;
+  }
+}

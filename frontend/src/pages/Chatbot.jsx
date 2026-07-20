@@ -51,7 +51,10 @@ const Chatbot = () => {
   });
 
   const [activeChatId, setActiveChatId] = useState(() => chats[0]?.id || null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.innerWidth > 768;
+  });
   const [loggingOut, setLoggingOut] = useState(false);
   const chatBodyRef = useRef();
 
@@ -110,15 +113,21 @@ const Chatbot = () => {
   // ── Chat management ──────────────────────────────────────────
   const startNewChat = () => {
     const emptyChat = chats.find(c => c.loaded && !c.history.some(m => m.role === "user"));
-    if (emptyChat) { setActiveChatId(emptyChat.id); return; }
+    if (emptyChat) {
+      setActiveChatId(emptyChat.id);
+      if (window.innerWidth <= 768) setIsSidebarOpen(false);
+      return;
+    }
 
     const newId = Date.now().toString();
     setChats(prev => [{ id: newId, title: "New Chat", history: [{ hideInChat: true, role: "model", text: CompanyInfo }], loaded: true }, ...prev]);
     setActiveChatId(newId);
+    if (window.innerWidth <= 768) setIsSidebarOpen(false);
   };
 
   const loadChat = async (chatId) => {
     setActiveChatId(chatId);
+    if (window.innerWidth <= 768) setIsSidebarOpen(false);
     const target = chats.find(c => c.id === chatId);
     if (target && !target.loaded) {
       try {
@@ -343,6 +352,14 @@ const Chatbot = () => {
   // ── Render ───────────────────────────────────────────────────
   return (
     <div className="container">
+      {isSidebarOpen && (
+        <button
+          type="button"
+          className="sidebar-backdrop"
+          aria-label="Close sidebar"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
       <Sidebar
         startNewChat={startNewChat}
         chatList={chats}
