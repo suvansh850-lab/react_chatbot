@@ -19,6 +19,13 @@ const getBackendRoot = () => {
   return `${window.location.origin}/api`;
 };
 
+const isLikelyMissingProdApiConfig = (errorMessage = "") => {
+  const isProdHost = window.location.hostname.includes("vercel.app");
+  const noApiEnv = !import.meta.env.VITE_API_URL;
+  const hitNotFound = errorMessage.includes("HTTP 404");
+  return isProdHost && noApiEnv && hitNotFound;
+};
+
 const buildClientShareUrl = (payload) => {
   const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(payload)))));
   return `${window.location.origin}/share?data=${encoded}`;
@@ -319,6 +326,10 @@ const Chatbot = () => {
       alert(`Share link created and copied to clipboard:\n${shareUrl}`);
       return;
     } catch (err) {
+      if (isLikelyMissingProdApiConfig(err?.message || "")) {
+        alert("Share link is unavailable because VITE_API_URL is not configured for production. Add VITE_API_URL in Vercel Environment Variables and redeploy.");
+        return;
+      }
       console.warn("Backend share failed, falling back to client-side share:", err);
     }
 

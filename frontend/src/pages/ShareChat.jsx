@@ -20,6 +20,13 @@ const ShareChat = () => {
     return `${window.location.origin}/api`;
   };
 
+  const isLikelyMissingProdApiConfig = (errorMessage = "") => {
+    const isProdHost = window.location.hostname.includes("vercel.app");
+    const noApiEnv = !import.meta.env.VITE_API_URL;
+    const hitNotFound = errorMessage.includes("HTTP 404");
+    return isProdHost && noApiEnv && hitNotFound;
+  };
+
   useEffect(() => {
     const fetchSharedConversation = async () => {
       setLoading(true);
@@ -66,7 +73,11 @@ const ShareChat = () => {
 
         setConversation(data.data);
       } catch (err) {
-        setError(err.message || 'Unable to load shared conversation.');
+        if (isLikelyMissingProdApiConfig(err?.message || "")) {
+          setError('Shared chat cannot load because VITE_API_URL is not configured for production.');
+        } else {
+          setError(err.message || 'Unable to load shared conversation.');
+        }
       } finally {
         setLoading(false);
       }
