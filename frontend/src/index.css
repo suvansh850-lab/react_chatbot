@@ -135,34 +135,6 @@ body {
   font-size: 0.95rem;
 }
 
-.chat-body .copy-message-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  opacity: 0.55;
-  font-size: 16px;
-  transition: opacity 0.2s ease, background 0.2s ease;
-}
-
-.chat-body .copy-message-btn:hover {
-  opacity: 1;
-  background: rgba(0, 0, 0, 0.06);
-}
-
-.chat-body .user-message .copy-message-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
 
 .chat-body .bot-message .message-text {
   background: #f6f2ff;
