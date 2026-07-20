@@ -12,9 +12,18 @@ const EMPTY_HISTORY = [];
 
 const getBackendRoot = () => {
   if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL.replace(/\/$/, "");
+    const trimmed = import.meta.env.VITE_API_URL.replace(/\/$/, "");
+    return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
   }
-  return `${window.location.origin}/api`;
+
+  const isLocalhost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  if (isLocalhost) {
+    return `${window.location.origin}/api`;
+  }
+
+  throw new Error(
+    "Backend URL is not configured. Please set VITE_API_URL to your deployed backend URL in production."
+  );
 };
 
 const Chatbot = () => {
