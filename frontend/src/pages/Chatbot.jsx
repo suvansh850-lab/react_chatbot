@@ -10,6 +10,13 @@ import { CompanyInfo } from '../CompanyInfo';
 
 const EMPTY_HISTORY = [];
 
+const getBackendRoot = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/\/$/, "");
+  }
+  return `${window.location.origin}/api`;
+};
+
 const Chatbot = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -50,7 +57,7 @@ const Chatbot = () => {
     if (!user?.id) return;
     const fetchConversations = async () => {
       try {
-        const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/chat";
+        const backendUrl = `${getBackendRoot()}/chat`;
         const response = await fetch(`${backendUrl}/conversations?userId=${user.id}`);
         const data = await response.json();
 
@@ -101,7 +108,7 @@ const Chatbot = () => {
     const target = chats.find(c => c.id === chatId);
     if (target && !target.loaded) {
       try {
-        const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/chat";
+        const backendUrl = `${getBackendRoot()}/chat`;
         const res = await fetch(`${backendUrl}/conversations/${chatId}/messages`);
         const data = await res.json();
         if (res.ok && data.success) {
@@ -120,7 +127,7 @@ const Chatbot = () => {
 
     if (user?.id) {
       try {
-        const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/chat";
+        const backendUrl = `${getBackendRoot()}/chat`;
         await fetch(`${backendUrl}/conversations/${chatId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -156,7 +163,7 @@ const Chatbot = () => {
 
     if (user?.id) {
       try {
-        const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/chat";
+        const backendUrl = `${getBackendRoot()}/chat`;
         await fetch(`${backendUrl}/conversations/${chatId}`, {
           method: "DELETE"
         });
@@ -209,7 +216,7 @@ const Chatbot = () => {
     }
 
     try {
-      const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/chat";
+      const backendUrl = `${getBackendRoot()}/chat`;
       const res = await fetch(backendUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -256,10 +263,9 @@ const Chatbot = () => {
       return;
     }
 
-    const apiRoot = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/api\/chat\/?$/, "").replace(/\/$/, "");
-
     try {
-      const response = await fetch(`${apiRoot}/api/share/${activeChatId}`, {
+      const apiRoot = getBackendRoot();
+      const response = await fetch(`${apiRoot}/share/${activeChatId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -269,9 +275,16 @@ const Chatbot = () => {
         })
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        const text = await response.text();
+        throw new Error(`Share request failed (${response.status}): ${text}`);
+      }
+
       if (!response.ok || !data.success) {
-        throw new Error(data.error || "Could not create share link.");
+        throw new Error(data.error || `Could not create share link. HTTP ${response.status}`);
       }
 
       const shareUrl = data.data.url;

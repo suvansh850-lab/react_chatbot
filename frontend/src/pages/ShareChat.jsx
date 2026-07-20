@@ -15,12 +15,18 @@ const ShareChat = () => {
       setError(null);
 
       try {
-        const apiRoot = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
+        const apiRoot = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, "") : window.location.origin;
         const response = await fetch(`${apiRoot}/api/share/${token}`);
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+        } catch (parseError) {
+          const text = await response.text();
+          throw new Error(`Load share failed (${response.status}): ${text}`);
+        }
 
         if (!response.ok || !data.success) {
-          throw new Error(data.error || 'Unable to load shared conversation.');
+          throw new Error(data.error || `Unable to load shared conversation. HTTP ${response.status}`);
         }
 
         setConversation(data.data);
