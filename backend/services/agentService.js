@@ -9,13 +9,52 @@ if (!apiKey || apiKey === "YOUR_GROQ_API_KEY") {
 }
 
 const model = new ChatGroq({
-  apiKey: apiKey,
-  model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+  apiKey,
+  model: process.env.GROQ_MODEL || "llama3-groq-70b-8192-tool-use-preview",
   temperature: 0.2, // Lower temperature for more consistent, factual support answers
 });
 
 const tools = [companyInfoTool, datetimeTool];
 const modelWithTools = model.bindTools(tools);
+
+function parseToolCallFromText(text) {
+  if (typeof text !== "string") {
+    return null;
+  }
+
+  const trimmed = text.trim();
+  if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(trimmed);
+    if (!payload || typeof payload !== "object") {
+      return null;
+    }
+
+    const name = payload.function || payload.name;
+    if (!name || typeof name !== "string") {
+      return null;
+    }
+
+    const args = payload.args ?? (payload.query !== undefined ? { query: payload.query } : {});
+    return {
+      id: `parsed_tool_call_${Date.now()}`,
+      name,
+      args,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function extractToolCalls(response) {
+  const rawCalls = response?.tool_calls
+    ?? response?.message?.tool_calls
+    ?? response?.message?.additional_kwargs?.tool_calls;
+  return Array.isArray(rawCalls) ? rawCalls : [];
+}
 
 /**
  * Execute the LangChain tool-calling Agent loop
@@ -58,23 +97,25 @@ Use the 'get_current_datetime' tool if the user asks about dates or times relati
         configurable: { conversationId }
       });
 
-      // Check if the LLM wants to run any tools
-      if (response.tool_calls && response.tool_calls.length > 0) {
+      const responseContent = response?.content ?? response?.message?.content ?? "";
+      const rawToolCalls = extractToolCalls(response);
+      const parsedToolCall = rawToolCalls.length === 0 ? parseToolCallFromText(responseContent) : null;
+      const toolCalls = rawToolCalls.length > 0 ? rawToolCalls : parsedToolCall ? [parsedToolCall] : [];
+
+      if (toolCalls.length > 0) {
         // Normalize arguments to prevent Groq API serialization errors (e.g. function=null)
-        response.tool_calls = response.tool_calls.map((tc) => ({
+        const normalizedToolCalls = toolCalls.map((tc) => ({
           ...tc,
           args: tc.args || {},
         }));
 
         // Append the AI message indicating tool calls to the conversational array
-        const responseContent = response?.content ?? response?.message?.content ?? "";
         currentMessages.push(new AIMessage(responseContent));
 
-        for (const toolCall of response.tool_calls) {
+        for (const toolCall of normalizedToolCalls) {
           const tool = tools.find((t) => t.name === toolCall.name);
           if (tool) {
             console.log(`[Agent] Executing tool: "${toolCall.name}" with arguments:`, toolCall.args);
-            // Execute the tool, forwarding the configuration block
             const toolResult = await tool.invoke(
               toolCall.args || {},
               { configurable: { conversationId } }
@@ -99,12 +140,11 @@ Use the 'get_current_datetime' tool if the user asks about dates or times relati
         step++;
       } else {
         // No tool calls requested: this is the final user-facing response
-        const finalContent = response?.content ?? response?.message?.content ?? "";
         return {
           choices: [
             {
               message: {
-                content: finalContent,
+                content: responseContent,
               },
             },
           ],
