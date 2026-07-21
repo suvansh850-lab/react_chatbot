@@ -8,14 +8,44 @@ if (!apiKey || apiKey === "YOUR_GROQ_API_KEY") {
   throw new Error("Groq API key is not configured in backend/.env file.");
 }
 
+const envModel = process.env.GROQ_MODEL;
+const defaultToolModel = "llama-3.3-70b-versatile";
+const supportedToolModels = new Set([
+  "llama3-70b-8192",
+  "qwen-qwq-32b",
+  "llama-3.1-8b-instant",
+  "deepseek-r1-distill-llama-70b",
+  "llama3-8b-8192",
+  "mistral-saba-24b",
+  "llama-3.3-70b-versatile",
+  "gemma2-9b-it",
+  "moonshotai/kimi-k2-instruct",
+  "moonshotai/kimi-k2-instruct-0905",
+  "qwen/qwen3-32b",
+  "meta-llama/llama-4-scout-17b-16e-instruct",
+  "meta-llama/llama-4-maverick-17b-128e-instruct",
+  "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b"
+]);
+
+const modelName = envModel && supportedToolModels.has(envModel)
+  ? envModel
+  : defaultToolModel;
+
+if (envModel && modelName !== envModel) {
+  console.warn(
+    `GROQ_MODEL '${envModel}' is not recognized as a supported tool-calling model; using '${defaultToolModel}' instead.`
+  );
+}
+
 const model = new ChatGroq({
   apiKey,
-  model: process.env.GROQ_MODEL || "llama3-groq-70b-8192-tool-use-preview",
+  model: modelName,
   temperature: 0.2, // Lower temperature for more consistent, factual support answers
 });
 
 const tools = [companyInfoTool, datetimeTool];
-const modelWithTools = model.bindTools(tools);
+const modelWithTools = model.bindTools(tools).withConfig({ tool_choice: "auto" });
 
 function parseToolCallFromText(text) {
   if (typeof text !== "string") {
@@ -56,6 +86,30 @@ function extractToolCalls(response) {
   return Array.isArray(rawCalls) ? rawCalls : [];
 }
 
+function shouldRetryWithoutTools(error) {
+  const msg = String(error?.message || "").toLowerCase();
+  return msg.includes("tool_use_failed")
+    || msg.includes("failed to call a function")
+    || msg.includes("function calling");
+}
+
+async function invokeWithFallback(currentMessages, conversationId) {
+  try {
+    return await modelWithTools.invoke(currentMessages, {
+      configurable: { conversationId }
+    });
+  } catch (error) {
+    if (shouldRetryWithoutTools(error)) {
+      console.warn("Tool call failed; retrying without tool calling:", error.message);
+      return await model.invoke(currentMessages, {
+        configurable: { conversationId },
+        tool_choice: "none"
+      });
+    }
+    throw error;
+  }
+}
+
 /**
  * Execute the LangChain tool-calling Agent loop
  * @param {Array} messages - Array of { role, content } messages from client
@@ -71,10 +125,9 @@ async function runAgent(messages, conversationId) {
           return new SystemMessage(
             `You are a customer support chatbot for Morepen.
 You must ONLY answer questions based on Morepen's company information.
-You have access to a tool called 'get_morepen_company_info' to retrieve company details. Always call this tool to find information when asked about Morepen's products, history, divisions, or strategy.
-IMPORTANT: You only need to call a tool ONCE to retrieve the information. Once the tool has been called and the information is present in the chat history, do NOT call that tool again. Use the provided information to answer the user's question directly.
-You must always return tool calls in the requested JSON format. Do not use <function> tags.
-If the user asks a question that cannot be answered using the retrieved company information, or asks for general/external knowledge, you must politely decline to answer, stating that you only have information regarding Morepen.
+You have access to a tool called 'get_morepen_company_info' to retrieve company details when asked about Morepen's products, history, divisions, or strategy.
+If you can use the tool, do so; otherwise answer using the company information already provided.
+If the user asks a question that cannot be answered using the retrieved company information, or asks for general/external knowledge, politely decline and explain you only have information about Morepen.
 Use the 'get_current_datetime' tool if the user asks about dates or times relative to 'today'.`
           );
         }
@@ -93,9 +146,7 @@ Use the 'get_current_datetime' tool if the user asks about dates or times relati
     // 2. Start the Agent Loop
     while (step < maxSteps) {
       // Pass the config block so the model and tools can access configurable values
-      const response = await modelWithTools.invoke(currentMessages, {
-        configurable: { conversationId }
-      });
+      const response = await invokeWithFallback(currentMessages, conversationId);
 
       const responseContent = response?.content ?? response?.message?.content ?? "";
       const rawToolCalls = extractToolCalls(response);
