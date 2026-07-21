@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import ChatBotIcon from './ChatBotIcon';
 
 const ChatMessage = ({ chat }) => {
