@@ -396,10 +396,7 @@ const Chatbot = () => {
 
         {/* Chat body */}
         <div ref={chatBodyRef} className="chat-body">
-          <div className="message bot-message">
-            <ChatBotIcon />
-            <p className="message-text">Hello! I am your Morepen Analyst Chatbot. How can I assist you today?</p>
-          </div>
+          <ChatMessage chat={{ role: "model", text: "Hello! I am your Morepen Analyst Chatbot. How can I assist you today?" }} />
           {chatHistory.map((chat, index) => (
             <ChatMessage key={index} chat={chat} />
           ))}

@@ -129,18 +129,49 @@ body {
 
 
 .chat-body .message .message-text {
-  padding: 12px 40px 10px 15px;
+  padding: 12px 15px;
   max-width: 100%;
   word-wrap: break-word;
   white-space: pre-line;
   font-size: 0.95rem;
 }
 
-
 .chat-body .bot-message .message-text {
   background: #f6f2ff;
   color: #2c2c2c;
   border-radius: 13px 13px 13px 3px;
+  padding-right: 42px;
+}
+
+.chat-body .copy-message-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #6D4FC2;
+  font-size: 17px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.65;
+  transition: opacity 0.2s ease, background-color 0.2s ease, transform 0.15s ease, color 0.2s ease;
+}
+
+.chat-body .copy-message-btn:hover {
+  opacity: 1;
+  background-color: rgba(109, 79, 194, 0.12);
+  transform: scale(1.08);
+}
+
+.chat-body .copy-message-btn.copied {
+  color: #16a34a;
+  opacity: 1;
+  background-color: rgba(22, 163, 74, 0.12);
 }
 
 .chat-body .user-message {
@@ -418,14 +449,20 @@ body {
   }
 
   .chat-body .message .message-text {
-    padding: 9px 36px 9px 12px;
+    padding: 9px 12px;
     font-size: 0.9rem;
   }
 
+  .chat-body .bot-message .message-text {
+    padding-right: 36px;
+  }
+
   .chat-body .copy-message-btn {
-    width: 24px;
-    height: 24px;
-    font-size: 14px;
+    top: 6px;
+    right: 6px;
+    width: 25px;
+    height: 25px;
+    font-size: 15px;
   }
 
   .chat-footer {

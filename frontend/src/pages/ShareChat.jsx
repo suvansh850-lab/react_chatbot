@@ -3,6 +3,41 @@ import { useParams, useLocation, Link } from 'react-router-dom';
 import ChatMessage from '../components/ChatMessage';
 import ChatBotIcon from '../components/ChatBotIcon';
 
+const SharedChatMessage = ({ message }) => {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!message.text) return;
+    try {
+      await navigator.clipboard.writeText(message.text);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy text:", err);
+    }
+  };
+
+  return (
+    <div className={`share-message ${message.role === 'model' ? 'bot' : 'user'}`}>
+      {message.role === 'model' && <ChatBotIcon />}
+      <div className="share-message-text" style={{ position: 'relative' }}>
+        <p>{message.text}</p>
+        {message.role === 'model' && (
+          <button
+            type="button"
+            className={`copy-message-btn material-symbols-outlined ${isCopied ? "copied" : ""}`}
+            onClick={handleCopy}
+            title={isCopied ? "Copied!" : "Copy answer"}
+            aria-label={isCopied ? "Copied to clipboard" : "Copy answer"}
+          >
+            {isCopied ? "check" : "content_copy"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const ShareChat = () => {
   const { token } = useParams();
   const [loading, setLoading] = useState(true);
@@ -117,12 +152,7 @@ const ShareChat = () => {
         </div>
         <div className="share-body">
           {conversation.messages.map((message, index) => (
-            <div key={index} className={`share-message ${message.role === 'model' ? 'bot' : 'user'}`}>
-              {message.role === 'model' && <ChatBotIcon />}
-              <div className="share-message-text">
-                <p>{message.text}</p>
-              </div>
-            </div>
+            <SharedChatMessage key={index} message={message} />
           ))}
         </div>
         <Link to="/" className="button-link">Back to Morepen Chatbot</Link>
