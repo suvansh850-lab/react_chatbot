@@ -127,8 +127,31 @@ body {
   max-width: 75%;
 }
 
+.chat-body .message .copy-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+  color: #333;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.chat-body .message .copy-button:hover {
+  background: #f8f8f8;
+}
+
+.chat-body .message .copy-button:active {
+  transform: scale(0.98);
+}
+
 .chat-body .message .message-text {
-  padding: 10px 40px 10px 15px;
+  padding: 12px 40px 10px 15px;
   max-width: 100%;
   word-wrap: break-word;
   white-space: pre-line;
