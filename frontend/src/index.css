@@ -132,22 +132,27 @@ body {
   top: 8px;
   right: 8px;
   border: 1px solid rgba(0, 0, 0, 0.12);
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.95);
   color: #333;
   border-radius: 999px;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.78rem;
+  font-size: 0;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.1s ease;
 }
 
 .chat-body .message .copy-button:hover {
-  background: #f8f8f8;
+  background: rgba(255, 255, 255, 1);
+}
+
+.chat-body .message .copy-button svg {
+  width: 16px;
+  height: 16px;
 }
 
 .chat-body .message .copy-button:active {
