@@ -101,7 +101,7 @@ body {
   flex-direction: column;
   gap: 20px;
   flex: 1;
-  padding: 25px 22px 100px;
+  padding: 25px 22px 75px;
   overflow-y: auto;
 }
 
