@@ -108,15 +108,30 @@ const Sidebar = ({ startNewChat, chatList = [], loadChat, activeChatId, isSideba
                           )}
                         </>
                       )}
-            className="sidebar-logout-btn"
-            onClick={onLogout}
-            disabled={loggingOut}
-            title="Sign out"
-          >
-            <span className="material-symbols-outlined">logout</span>
-            {loggingOut ? "Signing out..." : "Sign Out"}
-          </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Bottom: user info + logout ── */}
+      <div className="sidebar-footer">
+        <div className="sidebar-user-info">
+          <span className="material-symbols-outlined sidebar-user-icon">account_circle</span>
+          <span className="sidebar-user-email" title={user?.email}>{user?.email || "User"}</span>
         </div>
+        <button
+          className="sidebar-logout-btn"
+          onClick={onLogout}
+          disabled={loggingOut}
+          title="Sign out"
+        >
+          <span className="material-symbols-outlined">logout</span>
+          {loggingOut ? "Signing out..." : "Sign Out"}
+        </button>
       </div>
     </div>
   );
