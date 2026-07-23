@@ -54,6 +54,17 @@ const initDb = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sales_data (
+        id SERIAL PRIMARY KEY,
+        date DATE NOT NULL,
+        region VARCHAR(50) NOT NULL,
+        product VARCHAR(100) NOT NULL,
+        revenue NUMERIC(12, 2) NOT NULL,
+        units_sold INTEGER NOT NULL,
+        cost NUMERIC(12, 2) DEFAULT 0
+      );
+    `);
     console.log("📁 Database tables initialized successfully.");
   } catch (err) {
     console.error("❌ Error initializing database tables:", err.message);

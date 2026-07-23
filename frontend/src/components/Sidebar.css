@@ -313,3 +313,45 @@
     opacity: 1;
   }
 }
+
+/* Sidebar Tabs */
+.sidebar-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  background: #f4f4f4;
+  padding: 4px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  color: #555;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tab-btn:hover {
+  color: #6D4FC2;
+}
+
+.tab-btn.active {
+  background: #fff;
+  color: #6D4FC2;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.tab-btn .material-symbols-outlined {
+  font-size: 16px;
+}

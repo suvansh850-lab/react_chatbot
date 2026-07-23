@@ -7,6 +7,7 @@ import ChatForm from '../components/ChatForm';
 import ChatMessage from '../components/ChatMessage';
 import Sidebar from '../components/Sidebar';
 import { CompanyInfo } from '../CompanyInfo';
+import Dashboard from '../components/Dashboard';
 
 const EMPTY_HISTORY = [];
 
@@ -51,6 +52,7 @@ const Chatbot = () => {
   });
 
   const [activeChatId, setActiveChatId] = useState(() => chats[0]?.id || null);
+  const [activeTab, setActiveTab] = useState("chat");
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     return window.innerWidth > 768;
@@ -370,47 +372,53 @@ const Chatbot = () => {
         loggingOut={loggingOut}
         renameChat={renameChat}
         deleteChat={deleteChat}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
       />
 
-      <div className="chatbot-popup">
-        {/* Header */}
-        <div className="chat-header">
-          <div className="header-info">
+      {activeTab === "dashboard" ? (
+        <Dashboard />
+      ) : (
+        <div className="chatbot-popup">
+          {/* Header */}
+          <div className="chat-header">
+            <div className="header-info">
+              <button
+                className="menu-toggle-btn material-symbols-outlined"
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              >
+                menu
+              </button>
+              <ChatBotIcon />
+              <h2 className="logo-text">Morepen Analyst Chatbot</h2>
+            </div>
             <button
-              className="menu-toggle-btn material-symbols-outlined"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="share-chat-btn material-symbols-outlined"
+              onClick={shareCurrentChat}
+              title="Share chat"
             >
-              menu
+              share
             </button>
-            <ChatBotIcon />
-            <h2 className="logo-text">Morepen Analyst Chatbot</h2>
           </div>
-          <button
-            className="share-chat-btn material-symbols-outlined"
-            onClick={shareCurrentChat}
-            title="Share chat"
-          >
-            share
-          </button>
-        </div>
 
-        {/* Chat body */}
-        <div ref={chatBodyRef} className="chat-body">
-          <ChatMessage chat={{ role: "model", text: "Hello! I am your Morepen Analyst Chatbot. How can I assist you today?" }} />
-          {chatHistory.map((chat, index) => (
-            <ChatMessage key={index} chat={chat} />
-          ))}
-        </div>
+          {/* Chat body */}
+          <div ref={chatBodyRef} className="chat-body">
+            <ChatMessage chat={{ role: "model", text: "Hello! I am your Morepen Analyst Chatbot. How can I assist you today?" }} />
+            {chatHistory.map((chat, index) => (
+              <ChatMessage key={index} chat={chat} />
+            ))}
+          </div>
 
-        {/* Footer */}
-        <div className="chat-footer">
-          <ChatForm
-            chatHistory={chatHistory}
-            setChatHistory={setChatHistory}
-            generateBotResponse={generateBotResponse}
-          />
+          {/* Footer */}
+          <div className="chat-footer">
+            <ChatForm
+              chatHistory={chatHistory}
+              setChatHistory={setChatHistory}
+              generateBotResponse={generateBotResponse}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

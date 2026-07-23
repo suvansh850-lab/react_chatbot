@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import "./Sidebar.css";
 
-const Sidebar = ({ startNewChat, chatList = [], loadChat, activeChatId, isSidebarOpen, onLogout, loggingOut, renameChat, deleteChat }) => {
+const Sidebar = ({ startNewChat, chatList = [], loadChat, activeChatId, isSidebarOpen, onLogout, loggingOut, renameChat, deleteChat, activeTab = "chat", setActiveTab }) => {
   const { user } = useAuth();
   const [editingChatId, setEditingChatId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
@@ -22,88 +22,92 @@ const Sidebar = ({ startNewChat, chatList = [], loadChat, activeChatId, isSideba
       </div>
 
       <div className="sidebar-content">
-        <button className="new-chat-btn" onClick={startNewChat}>
-          <span>+</span> New Chat
-        </button>
-
-        <div className="history-section">
-          <h3>Chat History</h3>
-
-          {chatList.length === 0 ? (
-            <p className="empty-history">No Chats yet</p>
-          ) : (
-            chatList.map((chat) => {
-              const isEditing = chat.id === editingChatId;
-              return (
-                <div
-                  key={chat.id}
-                  className={`history-item ${chat.id === activeChatId ? 'active' : ''} ${isEditing ? 'editing' : ''}`}
-                  onClick={() => {
-                    if (!isEditing && loadChat) {
-                      loadChat(chat.id);
-                    }
-                  }}
-                  title={chat.title}
-                >
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      className="rename-input"
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleRenameSubmit(chat.id);
-                        } else if (e.key === 'Escape') {
-                          setEditingChatId(null);
-                        }
-                      }}
-                      onBlur={() => handleRenameSubmit(chat.id)}
-                      autoFocus
-                    />
-                  ) : (
-                    <>
-                      <span className="chat-title-text">{chat.title}</span>
-                      {chat.id === activeChatId && (
-                        <div className="action-buttons">
-                          <button
-                            className="rename-btn material-symbols-outlined"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingChatId(chat.id);
-                              setEditTitle(chat.title);
-                            }}
-                          >
-                            edit
-                          </button>
-                          <button
-                            className="delete-btn material-symbols-outlined"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (window.confirm("Are you sure you want to delete this chat?")) {
-                                deleteChat && deleteChat(chat.id);
-                              }
-                            }}
-                          >
-                            delete
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              );
-            })
-          )}
+        <div className="sidebar-tabs">
+          <button 
+            className={`tab-btn ${activeTab === 'chat' ? 'active' : ''}`} 
+            onClick={() => setActiveTab && setActiveTab('chat')}
+          >
+            <span className="material-symbols-outlined">chat</span> Chat
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`} 
+            onClick={() => setActiveTab && setActiveTab('dashboard')}
+          >
+            <span className="material-symbols-outlined">dashboard</span> Dashboard
+          </button>
         </div>
 
-        {/* ── Bottom: user info + logout ── */}
-        <div className="sidebar-footer">
-          <div className="sidebar-user-info">
-            <span className="material-symbols-outlined sidebar-user-icon">account_circle</span>
-            <span className="sidebar-user-email" title={user?.email}>{user?.email || "User"}</span>
-          </div>
-          <button
+        {activeTab === 'chat' && (
+          <>
+            <button className="new-chat-btn" onClick={startNewChat}>
+              <span>+</span> New Chat
+            </button>
+
+            <div className="history-section">
+              <h3>Chat History</h3>
+
+              {chatList.length === 0 ? (
+                <p className="empty-history">No Chats yet</p>
+              ) : (
+                chatList.map((chat) => {
+                  const isEditing = chat.id === editingChatId;
+                  return (
+                    <div
+                      key={chat.id}
+                      className={`history-item ${chat.id === activeChatId ? 'active' : ''} ${isEditing ? 'editing' : ''}`}
+                      onClick={() => {
+                        if (!isEditing && loadChat) {
+                          loadChat(chat.id);
+                        }
+                      }}
+                      title={chat.title}
+                    >
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          className="rename-input"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleRenameSubmit(chat.id);
+                            } else if (e.key === 'Escape') {
+                              setEditingChatId(null);
+                            }
+                          }}
+                          onBlur={() => handleRenameSubmit(chat.id)}
+                          autoFocus
+                        />
+                      ) : (
+                        <>
+                          <span className="chat-title-text">{chat.title}</span>
+                          {chat.id === activeChatId && (
+                            <div className="action-buttons">
+                              <button
+                                className="rename-btn material-symbols-outlined"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingChatId(chat.id);
+                                  setEditTitle(chat.title);
+                                }}
+                              >
+                                edit
+                              </button>
+                              <button
+                                className="delete-btn material-symbols-outlined"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm("Are you sure you want to delete this chat?")) {
+                                    deleteChat && deleteChat(chat.id);
+                                  }
+                                }}
+                              >
+                                delete
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
             className="sidebar-logout-btn"
             onClick={onLogout}
             disabled={loggingOut}
