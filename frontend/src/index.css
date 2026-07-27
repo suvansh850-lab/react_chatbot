@@ -101,7 +101,7 @@ body {
   flex-direction: column;
   gap: 20px;
   flex: 1;
-  padding: 25px 22px 75px;
+  padding: 25px 22px 120px;
   overflow-y: auto;
 }
 
@@ -407,7 +407,7 @@ body {
   }
 
   .chat-body {
-    padding: 20px 18px 96px;
+    padding: 20px 18px 130px;
     gap: 16px;
   }
 
@@ -487,7 +487,7 @@ body {
   }
 
   .chat-body {
-    padding: 16px 12px 88px;
+    padding: 16px 12px 120px;
     gap: 14px;
   }
 

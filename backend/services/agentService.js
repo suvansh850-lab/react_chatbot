@@ -1,5 +1,7 @@
 const { ChatGroq } = require("@langchain/groq");
 const { HumanMessage, AIMessage, SystemMessage, ToolMessage } = require("@langchain/core/messages");
+const { tool } = require("@langchain/core/tools");
+const { z } = require("zod");
 const { companyInfoTool } = require("./tools/companyInfoTool");
 const { datetimeTool } = require("./tools/datetimeTool");
 const db = require("../database/db");
@@ -45,7 +47,132 @@ const model = new ChatGroq({
   temperature: 0.2, // Lower temperature for more consistent, factual support answers
 });
 
-const tools = [companyInfoTool, datetimeTool];
+function calculateCSVColumn(csvText, columnName, operation) {
+  const lines = csvText.split("\n").map(line => line.trim()).filter(line => line.length > 0);
+  const cleanLines = lines.filter(line => !line.startsWith("--- Sheet:"));
+  if (cleanLines.length === 0) return "Error: The file content is empty.";
+  
+  const parseCSVLine = (text) => {
+    const result = [];
+    let insideQuote = false;
+    let entry = "";
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (char === '"') {
+        insideQuote = !insideQuote;
+      } else if (char === ',' && !insideQuote) {
+        result.push(entry.trim());
+        entry = "";
+      } else {
+        entry += char;
+      }
+    }
+    result.push(entry.trim());
+    return result;
+  };
+  
+  const headers = parseCSVLine(cleanLines[0]);
+  const colIndex = headers.findIndex(h => h.toLowerCase() === columnName.toLowerCase());
+  if (colIndex === -1) {
+    return `Error: Column '${columnName}' not found. Available columns in file: ${headers.join(", ")}`;
+  }
+  
+  const values = [];
+  for (let i = 1; i < cleanLines.length; i++) {
+    const row = parseCSVLine(cleanLines[i]);
+    if (row.length > colIndex) {
+      const valStr = row[colIndex].replace(/[\$\,\s]/g, ""); // strip currency/commas
+      const val = parseFloat(valStr);
+      if (!isNaN(val)) {
+        values.push(val);
+      }
+    }
+  }
+  
+  if (values.length === 0) {
+    return `Error: No numeric values found in column '${columnName}'.`;
+  }
+  
+  if (operation === "sum") {
+    const total = values.reduce((sum, v) => sum + v, 0);
+    return `Total sum of '${columnName}': ${total} (calculated exactly over ${values.length} rows)`;
+  }
+  if (operation === "average") {
+    const total = values.reduce((sum, v) => sum + v, 0);
+    const avg = total / values.length;
+    return `Average of '${columnName}': ${avg} (calculated exactly over ${values.length} rows)`;
+  }
+  if (operation === "min") {
+    const val = Math.min(...values);
+    return `Minimum value of '${columnName}': ${val}`;
+  }
+  if (operation === "max") {
+    const val = Math.max(...values);
+    return `Maximum value of '${columnName}': ${val}`;
+  }
+  if (operation === "count") {
+    return `Total count of values in '${columnName}': ${values.length}`;
+  }
+  
+  return "Error: Unknown operation.";
+}
+
+const fileMathTool = tool(
+  async ({ columnName, operation, fileName, sheetName }, config) => {
+    const conversationId = config?.configurable?.conversationId;
+    if (!conversationId) {
+      return "Error: No conversationId context found. Cannot query database.";
+    }
+    
+    try {
+      const dbResult = await db.query(
+        "SELECT file_name, file_content FROM conversation_files WHERE conversation_id = $1",
+        [conversationId]
+      );
+      if (dbResult.rows.length === 0) {
+        return "Error: No files found for this conversation. Please upload a file first.";
+      }
+      
+      const file = fileName 
+        ? dbResult.rows.find(r => r.file_name.toLowerCase() === fileName.toLowerCase())
+        : dbResult.rows[0]; // default to first file
+        
+      if (!file) {
+        return `Error: File '${fileName}' not found. Available files: ${dbResult.rows.map(r => r.file_name).join(", ")}`;
+      }
+      
+      let csvContent = file.file_content || "";
+      
+      if (sheetName) {
+        const sheetMarker = `--- Sheet: ${sheetName} ---`;
+        const startIdx = csvContent.indexOf(sheetMarker);
+        if (startIdx === -1) {
+          return `Error: Sheet '${sheetName}' not found in Excel file.`;
+        }
+        const rest = csvContent.substring(startIdx + sheetMarker.length);
+        const endIdx = rest.indexOf("--- Sheet:");
+        csvContent = endIdx === -1 ? rest : rest.substring(0, endIdx);
+      }
+      
+      return calculateCSVColumn(csvContent, columnName, operation);
+    } catch (e) {
+      console.error("Error executing calculate_file_column tool:", e.message);
+      return `Error: Failed to query file: ${e.message}`;
+    }
+  },
+  {
+    name: "calculate_file_column",
+    description: "Calculate exact mathematical operations (sum, average, min, max, count) on a specific column of an uploaded CSV or Excel file.",
+    schema: z.object({
+      columnName: z.string().describe("The name of the column to calculate (e.g. 'Total_Sales', 'Profit', or 'Sales')"),
+      operation: z.enum(["sum", "average", "min", "max", "count"]).describe("The mathematical operation to perform"),
+      fileName: z.string().optional().describe("The name of the file (e.g. 'sales.xlsx' or 'dataset.csv')"),
+      sheetName: z.string().optional().describe("For Excel files, the name of the sheet to query (e.g. 'Sheet1')")
+    })
+  }
+);
+
+const tools = [companyInfoTool, datetimeTool, fileMathTool];
 const modelWithTools = model.bindTools(tools).withConfig({ tool_choice: "auto" });
 
 function parseToolCallFromText(text) {
@@ -151,6 +278,7 @@ async function runAgent(messages, conversationId) {
 You can answer any questions, write code, analyze data, and assist the user.
 You have access to a tool called 'get_morepen_company_info' to retrieve company details when asked about Morepen's products, history, divisions, or strategy.
 Use the 'get_current_datetime' tool if the user asks about dates or times relative to 'today'.
+You also have access to a tool called 'calculate_file_column' to compute exact mathematical totals (sum, average, min, max, count) on specific columns of uploaded CSV/Excel files. Whenever the user asks you to calculate sums, averages, or totals on file data, you MUST use the 'calculate_file_column' tool to get the exact values instead of guessing or performing mental math.
 
 IMPORTANT: The user has uploaded files to this conversation. The full parsed text contents of these files are loaded directly into your prompt context below. You MUST read the file data below, perform any calculations or analyses requested by the user, and answer their questions directly using this data. Do not say you cannot access it, as the data is already provided to you.
 
