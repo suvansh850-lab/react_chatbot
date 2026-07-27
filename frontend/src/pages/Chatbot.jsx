@@ -7,6 +7,7 @@ import ChatForm from '../components/ChatForm';
 import ChatMessage from '../components/ChatMessage';
 import Sidebar from '../components/Sidebar';
 import VoiceAssistant from '../components/VoiceAssistant';
+import NotebookView from '../components/NotebookView';
 import { CompanyInfo } from '../CompanyInfo';
 
 const EMPTY_HISTORY = [];
@@ -63,6 +64,8 @@ const Chatbot = () => {
   const [selectedModel, setSelectedModel] = useState('groq/llama-3.3-70b-versatile');
   const chatBodyRef = useRef();
 
+  const [viewMode, setViewMode] = useState('chat'); // 'chat' | 'notebook'
+
   // Derived state
   const activeChat = chats.find(c => c.id === activeChatId) || chats[0];
   const chatHistory = activeChat ? activeChat.history : EMPTY_HISTORY;
@@ -79,6 +82,7 @@ const Chatbot = () => {
     ];
   });
   const [activeNotebookId, setActiveNotebookId] = useState(null);
+  const activeNotebook = notebooks.find(n => n.id === activeNotebookId);
 
   // Persist chats to localStorage
   useEffect(() => {
@@ -106,12 +110,14 @@ const Chatbot = () => {
 
   const selectNotebook = (notebookId, title = "Notebook Chat") => {
     setActiveNotebookId(notebookId);
+    setViewMode('notebook');
     const nb = notebooks.find(n => n.id === notebookId);
     const notebookTitle = nb ? nb.title : title;
     
     const existingChat = chats.find(c => c.notebookId === notebookId);
     if (existingChat) {
-      loadChat(existingChat.id);
+      setActiveChatId(existingChat.id);
+      setAttachedFiles([]);
     } else {
       const newChatId = Date.now().toString();
       setChats(prev => [{
@@ -127,6 +133,18 @@ const Chatbot = () => {
     if (window.innerWidth <= 768) setIsSidebarOpen(false);
   };
 
+  const handleNotebookPromptSend = (promptText) => {
+    setViewMode('chat');
+    const userMsg = { role: "user", text: promptText };
+    setChats(prev => prev.map(c => {
+      if (c.id === activeChatId) {
+        return { ...c, history: [...c.history, userMsg] };
+      }
+      return c;
+    }));
+    generateBotResponse([...chatHistory, userMsg]);
+  };
+
   const renameNotebook = (notebookId, newTitle) => {
     setNotebooks(prev => prev.map(nb => nb.id === notebookId ? { ...nb, title: newTitle } : nb));
     setChats(prev => prev.map(c => c.notebookId === notebookId ? { ...c, title: newTitle } : c));
@@ -136,6 +154,7 @@ const Chatbot = () => {
     setNotebooks(prev => prev.filter(nb => nb.id !== notebookId));
     if (activeNotebookId === notebookId) {
       setActiveNotebookId(null);
+      setViewMode('chat');
     }
   };
 
@@ -182,6 +201,8 @@ const Chatbot = () => {
 
   // ── Chat management ──────────────────────────────────────────
   const startNewChat = () => {
+    setActiveNotebookId(null);
+    setViewMode('chat');
     setAttachedFiles([]);
     const emptyChat = chats.find(c => c.loaded && !c.history.some(m => m.role === "user"));
     if (emptyChat) {
@@ -197,6 +218,7 @@ const Chatbot = () => {
   };
 
   const loadChat = async (chatId) => {
+    setViewMode('chat');
     setActiveChatId(chatId);
     setAttachedFiles([]);
     if (window.innerWidth <= 768) setIsSidebarOpen(false);
@@ -525,60 +547,78 @@ const Chatbot = () => {
         deleteChat={deleteChat}
       />
 
-      <div className="chatbot-popup">
-        {/* Header */}
-        <div className="chat-header">
-          <div className="header-info">
-            <button
-              className="menu-toggle-btn material-symbols-outlined"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            >
-              menu
-            </button>
-            <ChatBotIcon />
-            <h2 className="logo-text">Morepen Analyst Chatbot</h2>
+      {viewMode === 'notebook' && activeNotebook ? (
+        <NotebookView
+          notebook={activeNotebook}
+          onRenameNotebook={renameNotebook}
+          onFileUpload={handleFileUpload}
+          chats={chats}
+          onSelectChat={(chatId) => {
+            loadChat(chatId);
+            setViewMode('chat');
+          }}
+          onSendPrompt={handleNotebookPromptSend}
+          selectedModel={selectedModel}
+          setSelectedModel={setSelectedModel}
+          isUploading={isUploading}
+          setIsVoiceOpen={setIsVoiceOpen}
+        />
+      ) : (
+        <div className="chatbot-popup">
+          {/* Header */}
+          <div className="chat-header">
+            <div className="header-info">
+              <button
+                className="menu-toggle-btn material-symbols-outlined"
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              >
+                menu
+              </button>
+              <ChatBotIcon />
+              <h2 className="logo-text">Morepen Analyst Chatbot</h2>
+            </div>
+            <div className="header-actions">
+              {/* Voice button */}
+              <button
+                className="voice-assist-btn"
+                onClick={() => setIsVoiceOpen(true)}
+                title="Start voice assistant"
+              >
+                <span className="material-symbols-outlined">graphic_eq</span>
+              </button>
+              <button
+                className="share-chat-btn material-symbols-outlined"
+                onClick={shareCurrentChat}
+                title="Share chat"
+              >
+                share
+              </button>
+            </div>
           </div>
-          <div className="header-actions">
-            {/* Voice button */}
-            <button
-              className="voice-assist-btn"
-              onClick={() => setIsVoiceOpen(true)}
-              title="Start voice assistant"
-            >
-              <span className="material-symbols-outlined">graphic_eq</span>
-            </button>
-            <button
-              className="share-chat-btn material-symbols-outlined"
-              onClick={shareCurrentChat}
-              title="Share chat"
-            >
-              share
-            </button>
+
+          {/* Chat body */}
+          <div ref={chatBodyRef} className="chat-body">
+            <ChatMessage chat={{ role: "model", text: "Hello! I am your Morepen Analyst Chatbot. How can I assist you today?" }} />
+            {chatHistory.map((chat, index) => (
+              <ChatMessage key={index} chat={chat} />
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div className="chat-footer">
+            <ChatForm
+              chatHistory={chatHistory}
+              setChatHistory={setChatHistory}
+              generateBotResponse={generateBotResponse}
+              onFileUpload={handleFileUpload}
+              attachedFiles={attachedFiles}
+              isUploading={isUploading}
+              selectedModel={selectedModel}
+              setSelectedModel={setSelectedModel}
+            />
           </div>
         </div>
-
-        {/* Chat body */}
-        <div ref={chatBodyRef} className="chat-body">
-          <ChatMessage chat={{ role: "model", text: "Hello! I am your Morepen Analyst Chatbot. How can I assist you today?" }} />
-          {chatHistory.map((chat, index) => (
-            <ChatMessage key={index} chat={chat} />
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div className="chat-footer">
-          <ChatForm
-            chatHistory={chatHistory}
-            setChatHistory={setChatHistory}
-            generateBotResponse={generateBotResponse}
-            onFileUpload={handleFileUpload}
-            attachedFiles={attachedFiles}
-            isUploading={isUploading}
-            selectedModel={selectedModel}
-            setSelectedModel={setSelectedModel}
-          />
-        </div>
-      </div>
+      )}
     </div>
 
     {/* Voice Assistant Modal */}
