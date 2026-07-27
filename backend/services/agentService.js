@@ -152,6 +152,8 @@ You can answer any questions, write code, analyze data, and assist the user.
 You have access to a tool called 'get_morepen_company_info' to retrieve company details when asked about Morepen's products, history, divisions, or strategy.
 Use the 'get_current_datetime' tool if the user asks about dates or times relative to 'today'.
 
+IMPORTANT: The user has uploaded files to this conversation. The full parsed text contents of these files are loaded directly into your prompt context below. You MUST read the file data below, perform any calculations or analyses requested by the user, and answer their questions directly using this data. Do not say you cannot access it, as the data is already provided to you.
+
 ${fileContext}`
           );
         }

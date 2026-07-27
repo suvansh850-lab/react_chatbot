@@ -31,25 +31,8 @@ const ChatForm = ({ chatHistory, setChatHistory, generateBotResponse, onFileUplo
                 onChange={handleFileChange}
                 style={{ display: 'none' }}
                 accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.md,.json"
+                disabled={isUploading}
             />
-            
-            {/* Attached files preview inside unified input border */}
-            {(attachedFiles.length > 0 || isUploading) && (
-                <div className="attached-files-preview-box">
-                    {attachedFiles.map((name, idx) => (
-                        <div key={idx} className="file-badge">
-                            <span className="material-symbols-outlined file-badge-icon">description</span>
-                            <span className="file-badge-name" title={name}>{name}</span>
-                        </div>
-                    ))}
-                    {isUploading && (
-                        <div className="file-badge uploading-badge">
-                            <span className="material-symbols-outlined file-badge-icon">upload</span>
-                            <span className="file-badge-name">Uploading...</span>
-                        </div>
-                    )}
-                </div>
-            )}
 
             <div className="input-row">
                 <button 
@@ -57,12 +40,14 @@ const ChatForm = ({ chatHistory, setChatHistory, generateBotResponse, onFileUplo
                     className="attach-btn material-symbols-outlined" 
                     onClick={() => fileInputRef.current && fileInputRef.current.click()}
                     title="Attach file (.pdf, .docx, .xlsx, .csv, .txt)"
+                    disabled={isUploading}
+                    style={{ opacity: isUploading ? 0.5 : 1, cursor: isUploading ? 'not-allowed' : 'pointer' }}
                 >
-                    attachment
+                    {isUploading ? 'sync' : 'attachment'}
                 </button>
                 <input 
                     type="text" 
-                    placeholder="Type your message..." 
+                    placeholder={isUploading ? "Uploading file..." : "Type your message..."}
                     className="chat-input" 
                     ref={inputRef}
                     autoComplete="off"
@@ -71,8 +56,14 @@ const ChatForm = ({ chatHistory, setChatHistory, generateBotResponse, onFileUplo
                     spellCheck="false"
                     name="chat-message"
                     required 
+                    disabled={isUploading}
+                    style={{ cursor: isUploading ? 'not-allowed' : 'text' }}
                 />
-                <button className="material-symbols-rounded send-btn">
+                <button 
+                    className="material-symbols-rounded send-btn"
+                    disabled={isUploading}
+                    style={{ opacity: isUploading ? 0.5 : 1, cursor: isUploading ? 'not-allowed' : 'pointer' }}
+                >
                     arrow_upward
                 </button>
             </div>
