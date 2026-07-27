@@ -2,6 +2,7 @@ const { ChatGroq } = require("@langchain/groq");
 const { HumanMessage, AIMessage, SystemMessage, ToolMessage } = require("@langchain/core/messages");
 const { companyInfoTool } = require("./tools/companyInfoTool");
 const { datetimeTool } = require("./tools/datetimeTool");
+const db = require("../database/db");
 
 const apiKey = process.env.GROQ_API_KEY;
 if (!apiKey || apiKey === "YOUR_GROQ_API_KEY") {
@@ -117,18 +118,35 @@ async function invokeWithFallback(currentMessages, conversationId) {
  */
 async function runAgent(messages, conversationId) {
   try {
+    // Fetch uploaded files content for RAG analysis
+    let fileContext = "";
+    try {
+      if (conversationId) {
+        const dbResult = await db.query(
+          "SELECT file_name, file_content FROM conversation_files WHERE conversation_id = $1",
+          [conversationId]
+        );
+        if (dbResult && dbResult.rows.length > 0) {
+          fileContext = "\n\nUploaded Files in this conversation:\n" + 
+            dbResult.rows.map(row => `--- File: ${row.file_name} ---\n${row.file_content}`).join("\n\n");
+        }
+      }
+    } catch (dbError) {
+      console.error("Failed to fetch conversation files:", dbError.message);
+    }
+
     // 1. Map raw message formats into LangChain instances
     const langchainMessages = messages.map((msg) => {
       if (msg.role === "system") {
         // Intercept and swap bulky company data with optimized agent instructions
         if (msg.content && msg.content.includes("Company Information:")) {
           return new SystemMessage(
-            `You are a customer support chatbot for Morepen.
-You must ONLY answer questions based on Morepen's company information.
+            `You are a helpful, general-purpose AI assistant.
+You can answer any questions, write code, analyze data, and assist the user.
 You have access to a tool called 'get_morepen_company_info' to retrieve company details when asked about Morepen's products, history, divisions, or strategy.
-If you can use the tool, do so; otherwise answer using the company information already provided.
-If the user asks a question that cannot be answered using the retrieved company information, or asks for general/external knowledge, politely decline and explain you only have information about Morepen.
-Use the 'get_current_datetime' tool if the user asks about dates or times relative to 'today'.`
+Use the 'get_current_datetime' tool if the user asks about dates or times relative to 'today'.
+
+${fileContext}`
           );
         }
         return new SystemMessage(msg.content);

@@ -150,10 +150,75 @@ async function deleteConversation(req, res) {
   }
 }
 
+async function uploadFile(req, res) {
+  const { id } = req.params;
+  const { userId } = req.body;
+  const file = req.file;
+  
+  if (!file) {
+    return res.status(400).json({ success: false, error: "No file uploaded." });
+  }
+  
+  try {
+    const { parseFile } = require("../services/fileParser");
+    
+    await db.query(
+      `INSERT INTO conversations (id, title, user_id) 
+       VALUES ($1, $2, $3) 
+       ON CONFLICT (id) DO NOTHING`,
+      [id, "New Chat", userId || null]
+    );
+
+    console.log(`[File Upload] Parsing file: ${file.originalname} (${file.mimetype})`);
+    const fileContent = await parseFile(file.buffer, file.mimetype, file.originalname);
+    
+    const result = await db.query(
+      `INSERT INTO conversation_files (conversation_id, file_name, file_content) 
+       VALUES ($1, $2, $3) RETURNING id`,
+      [id, file.originalname, fileContent]
+    );
+    
+    return res.json({
+      success: true,
+      message: `File '${file.originalname}' uploaded and parsed successfully.`,
+      fileId: result.rows[0].id,
+      fileName: file.originalname
+    });
+  } catch (error) {
+    console.error("File upload and parsing error:", error.message);
+    return res.status(500).json({
+      success: false,
+      error: `Failed to process file: ${error.message}`
+    });
+  }
+}
+
+async function getConversationFiles(req, res) {
+  const { id } = req.params;
+  try {
+    const result = await db.query(
+      "SELECT file_name FROM conversation_files WHERE conversation_id = $1 ORDER BY created_at ASC",
+      [id]
+    );
+    return res.json({
+      success: true,
+      data: result.rows.map(row => row.file_name)
+    });
+  } catch (error) {
+    console.error("Failed to fetch conversation files:", error.message);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   handleChat,
   getConversations,
   getMessages,
   renameConversation,
-  deleteConversation
+  deleteConversation,
+  uploadFile,
+  getConversationFiles
 };

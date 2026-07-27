@@ -56,6 +56,8 @@ const Chatbot = () => {
     return window.innerWidth > 768;
   });
   const [loggingOut, setLoggingOut] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
   const chatBodyRef = useRef();
 
   // Derived state
@@ -112,6 +114,7 @@ const Chatbot = () => {
 
   // ── Chat management ──────────────────────────────────────────
   const startNewChat = () => {
+    setAttachedFiles([]);
     const emptyChat = chats.find(c => c.loaded && !c.history.some(m => m.role === "user"));
     if (emptyChat) {
       setActiveChatId(emptyChat.id);
@@ -127,7 +130,20 @@ const Chatbot = () => {
 
   const loadChat = async (chatId) => {
     setActiveChatId(chatId);
+    setAttachedFiles([]);
     if (window.innerWidth <= 768) setIsSidebarOpen(false);
+    
+    try {
+      const backendUrl = `${getBackendRoot()}/chat`;
+      const res = await fetch(`${backendUrl}/conversations/${chatId}/files`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setAttachedFiles(data.data || []);
+      }
+    } catch (err) {
+      console.error("Failed to load conversation files:", err);
+    }
+
     const target = chats.find(c => c.id === chatId);
     if (target && !target.loaded) {
       try {
@@ -193,6 +209,58 @@ const Chatbot = () => {
       } catch (err) {
         console.error("Failed to delete conversation:", err);
       }
+    }
+  };
+
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+    setIsUploading(true);
+    
+    let currentChatId = activeChatId;
+    if (!currentChatId) {
+      currentChatId = Date.now().toString();
+      setActiveChatId(currentChatId);
+      setChats(prev => [{ id: currentChatId, title: "New Chat", history: [{ hideInChat: true, role: "model", text: CompanyInfo }], loaded: true }, ...prev]);
+    }
+    
+    const formData = new FormData();
+    formData.append("file", file);
+    if (user?.id) {
+      formData.append("userId", user.id);
+    }
+    
+    try {
+      const backendUrl = `${getBackendRoot()}/chat`;
+      const res = await fetch(`${backendUrl}/conversations/${currentChatId}/upload-file`, {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setAttachedFiles(prev => [...prev, data.fileName]);
+        
+        const confirmMsg = {
+          role: "model",
+          text: `📎 **File uploaded successfully:** \`${data.fileName}\`\n\nI have parsed the file and it is ready for analysis. What would you like to know about it?`
+        };
+        
+        setChats(prev => prev.map(c => {
+          if (c.id === currentChatId) {
+            return {
+              ...c,
+              history: [...c.history, confirmMsg]
+            };
+          }
+          return c;
+        }));
+      } else {
+        alert(`Failed to upload file: ${data.error || "Unknown error"}`);
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert(`Error uploading file: ${err.message}`);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -408,6 +476,9 @@ const Chatbot = () => {
             chatHistory={chatHistory}
             setChatHistory={setChatHistory}
             generateBotResponse={generateBotResponse}
+            onFileUpload={handleFileUpload}
+            attachedFiles={attachedFiles}
+            isUploading={isUploading}
           />
         </div>
       </div>
