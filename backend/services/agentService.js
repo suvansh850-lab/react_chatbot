@@ -128,7 +128,13 @@ async function runAgent(messages, conversationId) {
         );
         if (dbResult && dbResult.rows.length > 0) {
           fileContext = "\n\nUploaded Files in this conversation:\n" + 
-            dbResult.rows.map(row => `--- File: ${row.file_name} ---\n${row.file_content}`).join("\n\n");
+            dbResult.rows.map(row => {
+              let content = row.file_content || "";
+              if (content.length > 25000) {
+                content = content.substring(0, 25000) + "\n\n[Content truncated to fit context limits...]";
+              }
+              return `--- File: ${row.file_name} ---\n${content}`;
+            }).join("\n\n");
         }
       }
     } catch (dbError) {
