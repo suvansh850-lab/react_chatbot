@@ -3,7 +3,7 @@ const db = require("../database/db");
 
 async function handleChat(req, res) {
   try {
-    const { conversationId, title, messages, userId } = req.body;
+    const { conversationId, title, messages, userId, model } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({
@@ -13,7 +13,7 @@ async function handleChat(req, res) {
     }
 
     // Call LangChain Agent Service
-    const completion = await agentService.runAgent(messages, conversationId);
+    const completion = await agentService.runAgent(messages, conversationId, model);
     
     // Extract reply text
     const botResponseText = completion.choices[0].message.content;

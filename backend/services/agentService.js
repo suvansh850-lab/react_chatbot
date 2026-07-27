@@ -6,47 +6,6 @@ const { companyInfoTool } = require("./tools/companyInfoTool");
 const { datetimeTool } = require("./tools/datetimeTool");
 const db = require("../database/db");
 
-const apiKey = process.env.GROQ_API_KEY;
-if (!apiKey || apiKey === "YOUR_GROQ_API_KEY") {
-  throw new Error("Groq API key is not configured in backend/.env file.");
-}
-
-const envModel = process.env.GROQ_MODEL;
-const defaultToolModel = "llama-3.3-70b-versatile";
-const supportedToolModels = new Set([
-  "llama3-70b-8192",
-  "qwen-qwq-32b",
-  "llama-3.1-8b-instant",
-  "deepseek-r1-distill-llama-70b",
-  "llama3-8b-8192",
-  "mistral-saba-24b",
-  "llama-3.3-70b-versatile",
-  "gemma2-9b-it",
-  "moonshotai/kimi-k2-instruct",
-  "moonshotai/kimi-k2-instruct-0905",
-  "qwen/qwen3-32b",
-  "meta-llama/llama-4-scout-17b-16e-instruct",
-  "meta-llama/llama-4-maverick-17b-128e-instruct",
-  "openai/gpt-oss-120b",
-  "openai/gpt-oss-20b"
-]);
-
-const modelName = envModel && supportedToolModels.has(envModel)
-  ? envModel
-  : defaultToolModel;
-
-if (envModel && modelName !== envModel) {
-  console.warn(
-    `GROQ_MODEL '${envModel}' is not recognized as a supported tool-calling model; using '${defaultToolModel}' instead.`
-  );
-}
-
-const model = new ChatGroq({
-  apiKey,
-  model: modelName,
-  temperature: 0.2, // Lower temperature for more consistent, factual support answers
-});
-
 function calculateCSVColumn(csvText, columnName, operation) {
   const lines = csvText.split("\n").map(line => line.trim()).filter(line => line.length > 0);
   const cleanLines = lines.filter(line => !line.startsWith("--- Sheet:"));
@@ -173,7 +132,6 @@ const fileMathTool = tool(
 );
 
 const tools = [companyInfoTool, datetimeTool, fileMathTool];
-const modelWithTools = model.bindTools(tools).withConfig({ tool_choice: "auto" });
 
 function parseToolCallFromText(text) {
   if (typeof text !== "string") {
@@ -243,15 +201,15 @@ function shouldRetryWithoutTools(error) {
     || msg.includes("function calling");
 }
 
-async function invokeWithFallback(currentMessages, conversationId) {
+async function invokeWithFallback(currentMessages, conversationId, currentModel, currentModelWithTools) {
   try {
-    return await modelWithTools.invoke(currentMessages, {
+    return await currentModelWithTools.invoke(currentMessages, {
       configurable: { conversationId }
     });
   } catch (error) {
     if (shouldRetryWithoutTools(error)) {
       console.warn("Tool call failed; retrying without tool calling:", error.message);
-      return await model.invoke(currentMessages, {
+      return await currentModel.invoke(currentMessages, {
         configurable: { conversationId },
         tool_choice: "none"
       });
@@ -264,9 +222,47 @@ async function invokeWithFallback(currentMessages, conversationId) {
  * Execute the LangChain tool-calling Agent loop
  * @param {Array} messages - Array of { role, content } messages from client
  * @param {string} conversationId - The active conversation ID
+ * @param {string} selectedModel - The selected model identifier (e.g. 'groq/llama-3.3-70b-versatile' or 'gemini/gemini-1.5-flash')
  */
-async function runAgent(messages, conversationId) {
+async function runAgent(messages, conversationId, selectedModel = "groq/llama-3.3-70b-versatile") {
   try {
+    // Determine model provider and model name
+    const [provider, modelName] = selectedModel.split("/");
+    let currentModel;
+
+    if (provider === "gemini") {
+      try {
+        const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
+        const geminiApiKey = process.env.GEMINI_API_KEY;
+        if (!geminiApiKey || geminiApiKey === "YOUR_GEMINI_API_KEY") {
+          throw new Error("GEMINI_API_KEY is not configured in backend/.env file.");
+        }
+        currentModel = new ChatGoogleGenerativeAI({
+          apiKey: geminiApiKey,
+          modelName: modelName || "gemini-1.5-flash",
+          temperature: 0.2,
+        });
+      } catch (err) {
+        if (err.code === "MODULE_NOT_FOUND") {
+          throw new Error("Gemini support library is missing. Please run 'npm install @langchain/google-genai' in the backend folder and restart the server.");
+        }
+        throw err;
+      }
+    } else {
+      // Default to ChatGroq
+      const groqApiKey = process.env.GROQ_API_KEY;
+      if (!groqApiKey || groqApiKey === "YOUR_GROQ_API_KEY") {
+        throw new Error("GROQ_API_KEY is not configured in backend/.env file.");
+      }
+      currentModel = new ChatGroq({
+        apiKey: groqApiKey,
+        model: modelName || "llama-3.3-70b-versatile",
+        temperature: 0.2,
+      });
+    }
+
+    const currentModelWithTools = currentModel.bindTools(tools).withConfig({ tool_choice: "auto" });
+
     // Fetch uploaded files content for RAG analysis
     let fileContext = "";
     try {
@@ -322,7 +318,7 @@ ${fileContext}`
     // 2. Start the Agent Loop
     while (step < maxSteps) {
       // Pass the config block so the model and tools can access configurable values
-      const response = await invokeWithFallback(currentMessages, conversationId);
+      const response = await invokeWithFallback(currentMessages, conversationId, currentModel, currentModelWithTools);
 
       const responseContent = response?.content ?? response?.message?.content ?? "";
       const rawToolCalls = extractToolCalls(response);
