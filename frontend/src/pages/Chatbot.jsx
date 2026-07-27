@@ -468,29 +468,6 @@ const Chatbot = () => {
             <h2 className="logo-text">Morepen Analyst Chatbot</h2>
           </div>
           <div className="header-actions">
-            {/* Model Selector Dropdown */}
-            <div className="model-selector-wrapper">
-              <select
-                className="model-selector"
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                title="Select AI model"
-              >
-                <optgroup label="⚡ Groq">
-                  <option value="groq/llama-3.3-70b-versatile">Llama 3.3 70B</option>
-                  <option value="groq/llama-3.1-8b-instant">Llama 3.1 8B</option>
-                  <option value="groq/gemma2-9b-it">Gemma 2 9B</option>
-                  <option value="groq/qwen/qwen3-32b">Qwen 3 32B</option>
-                  <option value="groq/moonshotai/kimi-k2-instruct">Kimi K2</option>
-                </optgroup>
-                <optgroup label="✨ Gemini">
-                  <option value="gemini/gemini-1.5-flash">Gemini 1.5 Flash</option>
-                  <option value="gemini/gemini-1.5-pro">Gemini 1.5 Pro</option>
-                  <option value="gemini/gemini-2.0-flash">Gemini 2.0 Flash</option>
-                </optgroup>
-              </select>
-              <span className="model-selector-arrow material-symbols-outlined">expand_more</span>
-            </div>
             {/* Voice button */}
             <button
               className="voice-assist-btn"
@@ -526,6 +503,8 @@ const Chatbot = () => {
             onFileUpload={handleFileUpload}
             attachedFiles={attachedFiles}
             isUploading={isUploading}
+            selectedModel={selectedModel}
+            setSelectedModel={setSelectedModel}
           />
         </div>
       </div>

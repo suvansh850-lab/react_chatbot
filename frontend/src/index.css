@@ -692,7 +692,117 @@ body {
   display: flex;
   align-items: center;
   width: 100%;
+  gap: 2px;
 }
+
+/* Vertical divider between model pill and text input */
+.input-divider {
+  width: 1px;
+  height: 20px;
+  background: #d0d0d0;
+  margin: 0 6px;
+  flex-shrink: 0;
+  border-radius: 1px;
+}
+
+/* Inline model selector pill */
+.inline-model-selector {
+  position: relative;
+}
+
+.model-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: transparent;
+  border: none;
+  color: #444;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 3px 4px 3px 6px;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.model-pill-btn:hover {
+  background: rgba(109, 79, 194, 0.08);
+  color: #6D4FC2;
+}
+
+.model-pill-label {
+  letter-spacing: 0.01em;
+}
+
+.model-pill-arrow {
+  font-size: 18px !important;
+  color: #666;
+  line-height: 1;
+}
+
+/* Dropdown panel */
+.model-dropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  min-width: 200px;
+  z-index: 200;
+  padding: 6px 0;
+  animation: dropdown-appear 0.15s ease;
+}
+
+@keyframes dropdown-appear {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.model-dropdown-group-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #999;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 8px 14px 4px;
+}
+
+.model-dropdown-item {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 0.88rem;
+  color: #2c2c2c;
+  padding: 8px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 0.1s ease;
+  border-radius: 8px;
+  margin: 1px 4px;
+  width: calc(100% - 8px);
+}
+
+.model-dropdown-item:hover {
+  background: rgba(109, 79, 194, 0.08);
+  color: #6D4FC2;
+}
+
+.model-dropdown-item.active {
+  font-weight: 600;
+  color: #6D4FC2;
+}
+
+.model-check {
+  font-size: 16px !important;
+  color: #6D4FC2;
+}
+
 
 .chat-footer .chat-form-unified .chat-input {
   height: 38px;
