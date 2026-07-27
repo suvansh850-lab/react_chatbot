@@ -1,4 +1,4 @@
-const pdfParse = require("pdf-parse");
+const { PDFParse } = require("pdf-parse");
 const mammoth = require("mammoth");
 const xlsx = require("xlsx");
 
@@ -15,7 +15,8 @@ async function parseFile(fileBuffer, mimeType, originalName) {
   const extension = originalName.split(".").pop().toLowerCase();
   
   if (extension === "pdf" || mimeType === "application/pdf") {
-    const data = await pdfParse(fileBuffer);
+    const parser = new PDFParse(fileBuffer);
+    const data = await parser.parse();
     return data.text;
   }
   
