@@ -55,17 +55,6 @@ const initDb = async () => {
       );
     `);
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS sales_data (
-        id SERIAL PRIMARY KEY,
-        date DATE NOT NULL,
-        region VARCHAR(50) NOT NULL,
-        product VARCHAR(100) NOT NULL,
-        revenue NUMERIC(12, 2) NOT NULL,
-        units_sold INTEGER NOT NULL,
-        cost NUMERIC(12, 2) DEFAULT 0
-      );
-    `);
-    await pool.query(`
       CREATE TABLE IF NOT EXISTS morepen_knowledge (
         id SERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,

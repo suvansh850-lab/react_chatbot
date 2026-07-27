@@ -50,7 +50,6 @@ app.get("/api/test-db", async (req, res) => {
 // ============================
 app.use("/api/chat", chatRoutes);
 app.use("/api/share", require("./routes/shareRoutes"));
-app.use("/api/crew", require("./routes/crewRoutes"));
 app.use("/api/knowledge", require("./routes/knowledgeRoutes"));
 
 // ============================
