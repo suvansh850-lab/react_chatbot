@@ -65,9 +65,50 @@ const initDb = async () => {
         cost NUMERIC(12, 2) DEFAULT 0
       );
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS morepen_knowledge (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        content TEXT NOT NULL,
+        category VARCHAR(100) DEFAULT 'General',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
     console.log("📁 Database tables initialized successfully.");
+    
+    // Auto-migrate static knowledge data
+    await migrateStaticKnowledge();
   } catch (err) {
     console.error("❌ Error initializing database tables:", err.message);
+  }
+};
+
+const migrateStaticKnowledge = async () => {
+  try {
+    const checkRes = await pool.query("SELECT COUNT(*) FROM morepen_knowledge");
+    const count = parseInt(checkRes.rows[0].count);
+    if (count === 0) {
+      console.log("🚚 Migrating static company info to database...");
+      const { companyInfo } = require("../services/tools/companyInfoData");
+      const paragraphs = companyInfo
+        .split(/\n\s*\n/)
+        .map(p => p.trim())
+        .filter(p => p.length > 20);
+
+      for (const para of paragraphs) {
+        const lines = para.split("\n").map(l => l.trim()).filter(Boolean);
+        const titleLine = lines[0] || "Morepen Overview";
+        const cleanTitle = titleLine.replace(/[#*_\-:]/g, "").trim().substring(0, 100);
+        
+        await pool.query(
+          "INSERT INTO morepen_knowledge (title, content, category) VALUES ($1, $2, $3)",
+          [cleanTitle || "General Information", para, "Auto-Migrated"]
+        );
+      }
+      console.log(`✅ Successfully migrated ${paragraphs.length} knowledge items.`);
+    }
+  } catch (err) {
+    console.error("❌ Error during knowledge migration:", err.message);
   }
 };
 

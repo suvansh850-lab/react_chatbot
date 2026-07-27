@@ -3,20 +3,13 @@ import psycopg2
 from dotenv import load_dotenv
 from crewai import Agent, Task, Crew, Process
 from crewai.tools import tool
-from langchain_groq import ChatGroq
 
 # Load environment variables
 load_dotenv()
 
-# Initialize ChatGroq LLM
-groq_api_key = os.getenv("GROQ_API_KEY")
+# Initialize LLM via CrewAI's built-in LiteLLM integration
 model_name = os.getenv("GROQ_MODEL_NAME", "llama3-70b-8192")
-
-llm = ChatGroq(
-    groq_api_key=groq_api_key,
-    model_name=model_name,
-    temperature=0.2
-)
+llm = f"groq/{model_name}"
 
 # -------------------------------------------------------------
 # DATABASE QUERY TOOL
