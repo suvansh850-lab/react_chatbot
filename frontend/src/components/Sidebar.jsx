@@ -2,18 +2,47 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import "./Sidebar.css";
 
-const Sidebar = ({ startNewChat, chatList = [], loadChat, activeChatId, isSidebarOpen, onLogout, loggingOut, renameChat, deleteChat }) => {
+const Sidebar = ({
+  startNewChat,
+  chatList = [],
+  loadChat,
+  activeChatId,
+  notebooks = [],
+  activeNotebookId,
+  createNotebook,
+  selectNotebook,
+  renameNotebook,
+  deleteNotebook,
+  isSidebarOpen,
+  onLogout,
+  loggingOut,
+  renameChat,
+  deleteChat
+}) => {
   const { user } = useAuth();
   const [editingChatId, setEditingChatId] = useState(null);
-  const [editTitle, setEditTitle] = useState("");
+  const [editChatTitle, setEditChatTitle] = useState("");
+  const [editingNotebookId, setEditingNotebookId] = useState(null);
+  const [editNotebookTitle, setEditNotebookTitle] = useState("");
+  const [showAllNotebooks, setShowAllNotebooks] = useState(false);
 
-  const handleRenameSubmit = (chatId) => {
-    const trimmed = editTitle.trim();
+  const handleChatRenameSubmit = (chatId) => {
+    const trimmed = editChatTitle.trim();
     if (trimmed && renameChat) {
       renameChat(chatId, trimmed);
     }
     setEditingChatId(null);
   };
+
+  const handleNotebookRenameSubmit = (notebookId) => {
+    const trimmed = editNotebookTitle.trim();
+    if (trimmed && renameNotebook) {
+      renameNotebook(notebookId, trimmed);
+    }
+    setEditingNotebookId(null);
+  };
+
+  const displayedNotebooks = showAllNotebooks ? notebooks : notebooks.slice(0, 3);
 
   return (
     <div className={`sidebar ${isSidebarOpen ? '' : 'collapsed'}`}>
@@ -22,57 +51,57 @@ const Sidebar = ({ startNewChat, chatList = [], loadChat, activeChatId, isSideba
       </div>
 
       <div className="sidebar-content">
-        <button className="new-chat-btn" onClick={startNewChat}>
-          <span>+</span> New Chat
-        </button>
+        {/* ── Notebooks Section ── */}
+        <div className="sidebar-section notebooks-section">
+          <div className="section-header-title">Notebooks</div>
 
-        <div className="history-section">
-          <h3>Chat History</h3>
+          <button className="new-notebook-btn" onClick={createNotebook}>
+            <span className="material-symbols-outlined icon">add</span>
+            <span>New notebook</span>
+          </button>
 
-          {chatList.length === 0 ? (
-            <p className="empty-history">No Chats yet</p>
-          ) : (
-            chatList.map((chat) => {
-              const isEditing = chat.id === editingChatId;
-              return (
-                <div
-                  key={chat.id}
-                  className={`history-item ${chat.id === activeChatId ? 'active' : ''} ${isEditing ? 'editing' : ''}`}
-                  onClick={() => {
-                    if (!isEditing && loadChat) {
-                      loadChat(chat.id);
-                    }
-                  }}
-                  title={chat.title}
-                >
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      className="rename-input"
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleRenameSubmit(chat.id);
-                        } else if (e.key === 'Escape') {
-                          setEditingChatId(null);
-                        }
-                      }}
-                      onBlur={() => handleRenameSubmit(chat.id)}
-                      autoFocus
-                    />
-                  ) : (
-                    <>
-                      <span className="chat-title-text">{chat.title}</span>
-                      {chat.id === activeChatId && (
+          <div className="notebook-list">
+            {notebooks.length === 0 ? (
+              <p className="empty-section-text">No notebooks yet</p>
+            ) : (
+              displayedNotebooks.map((nb) => {
+                const isEditing = nb.id === editingNotebookId;
+                const isActive = nb.id === activeNotebookId;
+                return (
+                  <div
+                    key={nb.id}
+                    className={`sidebar-item notebook-item ${isActive ? 'active' : ''}`}
+                    onClick={() => {
+                      if (!isEditing && selectNotebook) selectNotebook(nb.id);
+                    }}
+                    title={nb.title}
+                  >
+                    <span className="material-symbols-outlined item-icon">menu_book</span>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="rename-input"
+                        value={editNotebookTitle}
+                        onChange={(e) => setEditNotebookTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleNotebookRenameSubmit(nb.id);
+                          else if (e.key === 'Escape') setEditingNotebookId(null);
+                        }}
+                        onBlur={() => handleNotebookRenameSubmit(nb.id)}
+                        autoFocus
+                      />
+                    ) : (
+                      <>
+                        <span className="item-title-text">{nb.title}</span>
                         <div className="action-buttons">
                           <button
                             className="rename-btn material-symbols-outlined"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setEditingChatId(chat.id);
-                              setEditTitle(chat.title);
+                              setEditingNotebookId(nb.id);
+                              setEditNotebookTitle(nb.title);
                             }}
+                            title="Rename notebook"
                           >
                             edit
                           </button>
@@ -80,15 +109,101 @@ const Sidebar = ({ startNewChat, chatList = [], loadChat, activeChatId, isSideba
                             className="delete-btn material-symbols-outlined"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (window.confirm("Are you sure you want to delete this chat?")) {
-                                deleteChat && deleteChat(chat.id);
+                              if (window.confirm("Are you sure you want to delete this notebook?")) {
+                                deleteNotebook && deleteNotebook(nb.id);
                               }
                             }}
+                            title="Delete notebook"
                           >
                             delete
                           </button>
                         </div>
-                      )}
+                      </>
+                    )}
+                  </div>
+                );
+              })
+            )}
+
+            {notebooks.length > 3 && (
+              <button
+                className="all-notebooks-btn"
+                onClick={() => setShowAllNotebooks(!showAllNotebooks)}
+              >
+                <span className="material-symbols-outlined icon">more_horiz</span>
+                <span>{showAllNotebooks ? "Show fewer" : "All notebooks"}</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* ── Recent Chats Section ── */}
+        <div className="sidebar-section history-section">
+          <div className="section-header-row">
+            <div className="section-header-title">Recent</div>
+            <button className="new-chat-icon-btn" onClick={startNewChat} title="New chat">
+              <span className="material-symbols-outlined">add</span>
+            </button>
+          </div>
+
+          {chatList.length === 0 ? (
+            <p className="empty-section-text">No chats yet</p>
+          ) : (
+            chatList.map((chat, idx) => {
+              const isEditing = chat.id === editingChatId;
+              const isActive = chat.id === activeChatId && !activeNotebookId;
+              const showBlueDot = idx < 3; // Recent active indicator dot
+              return (
+                <div
+                  key={chat.id}
+                  className={`sidebar-item history-item ${isActive ? 'active' : ''} ${isEditing ? 'editing' : ''}`}
+                  onClick={() => {
+                    if (!isEditing && loadChat) loadChat(chat.id);
+                  }}
+                  title={chat.title}
+                >
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      className="rename-input"
+                      value={editChatTitle}
+                      onChange={(e) => setEditChatTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleChatRenameSubmit(chat.id);
+                        else if (e.key === 'Escape') setEditingChatId(null);
+                      }}
+                      onBlur={() => handleChatRenameSubmit(chat.id)}
+                      autoFocus
+                    />
+                  ) : (
+                    <>
+                      <span className="item-title-text">{chat.title}</span>
+                      {showBlueDot && <span className="recent-blue-dot" title="Recent activity" />}
+                      <div className="action-buttons">
+                        <button
+                          className="rename-btn material-symbols-outlined"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingChatId(chat.id);
+                            setEditChatTitle(chat.title);
+                          }}
+                          title="Rename chat"
+                        >
+                          edit
+                        </button>
+                        <button
+                          className="delete-btn material-symbols-outlined"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm("Are you sure you want to delete this chat?")) {
+                              deleteChat && deleteChat(chat.id);
+                            }
+                          }}
+                          title="Delete chat"
+                        >
+                          delete
+                        </button>
+                      </div>
                     </>
                   )}
                 </div>
@@ -98,7 +213,7 @@ const Sidebar = ({ startNewChat, chatList = [], loadChat, activeChatId, isSideba
         </div>
       </div>
 
-      {/* ── Bottom: user info + logout ── */}
+      {/* ── Bottom: User Info & Sign Out ── */}
       <div className="sidebar-footer">
         <div className="sidebar-user-info">
           <span className="material-symbols-outlined sidebar-user-icon">account_circle</span>

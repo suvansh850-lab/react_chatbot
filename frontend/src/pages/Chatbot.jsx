@@ -67,12 +67,77 @@ const Chatbot = () => {
   const activeChat = chats.find(c => c.id === activeChatId) || chats[0];
   const chatHistory = activeChat ? activeChat.history : EMPTY_HISTORY;
 
-  // Persist to localStorage
+  const [notebooks, setNotebooks] = useState(() => {
+    const savedKey = user?.id ? `morepen_notebooks_${user.id}` : "morepen_notebooks";
+    const saved = localStorage.getItem(savedKey);
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error(e); }
+    }
+    return [
+      { id: "nb_1", title: "Untitled notebook", createdAt: Date.now() - 86400000 },
+      { id: "nb_2", title: "Professional Profile and Resume", createdAt: Date.now() - 172800000 }
+    ];
+  });
+  const [activeNotebookId, setActiveNotebookId] = useState(null);
+
+  // Persist chats to localStorage
   useEffect(() => {
     if (user?.id) {
       localStorage.setItem(`morepen_chats_${user.id}`, JSON.stringify(chats));
     }
   }, [chats, user]);
+
+  // Persist notebooks to localStorage
+  useEffect(() => {
+    const savedKey = user?.id ? `morepen_notebooks_${user.id}` : "morepen_notebooks";
+    localStorage.setItem(savedKey, JSON.stringify(notebooks));
+  }, [notebooks, user]);
+
+  const createNotebook = () => {
+    const newId = `nb_${Date.now()}`;
+    const newNotebook = {
+      id: newId,
+      title: "Untitled notebook",
+      createdAt: Date.now()
+    };
+    setNotebooks(prev => [newNotebook, ...prev]);
+    selectNotebook(newId, "Untitled notebook");
+  };
+
+  const selectNotebook = (notebookId, title = "Notebook Chat") => {
+    setActiveNotebookId(notebookId);
+    const nb = notebooks.find(n => n.id === notebookId);
+    const notebookTitle = nb ? nb.title : title;
+    
+    const existingChat = chats.find(c => c.notebookId === notebookId);
+    if (existingChat) {
+      loadChat(existingChat.id);
+    } else {
+      const newChatId = Date.now().toString();
+      setChats(prev => [{
+        id: newChatId,
+        title: notebookTitle,
+        notebookId: notebookId,
+        history: [{ hideInChat: true, role: "model", text: CompanyInfo }],
+        loaded: true
+      }, ...prev]);
+      setActiveChatId(newChatId);
+      setAttachedFiles([]);
+    }
+    if (window.innerWidth <= 768) setIsSidebarOpen(false);
+  };
+
+  const renameNotebook = (notebookId, newTitle) => {
+    setNotebooks(prev => prev.map(nb => nb.id === notebookId ? { ...nb, title: newTitle } : nb));
+    setChats(prev => prev.map(c => c.notebookId === notebookId ? { ...c, title: newTitle } : c));
+  };
+
+  const deleteNotebook = (notebookId) => {
+    setNotebooks(prev => prev.filter(nb => nb.id !== notebookId));
+    if (activeNotebookId === notebookId) {
+      setActiveNotebookId(null);
+    }
+  };
 
   // Load conversations from database on mount
   useEffect(() => {
@@ -447,6 +512,12 @@ const Chatbot = () => {
         chatList={chats}
         loadChat={loadChat}
         activeChatId={activeChatId}
+        notebooks={notebooks}
+        activeNotebookId={activeNotebookId}
+        createNotebook={createNotebook}
+        selectNotebook={selectNotebook}
+        renameNotebook={renameNotebook}
+        deleteNotebook={deleteNotebook}
         isSidebarOpen={isSidebarOpen}
         onLogout={handleLogout}
         loggingOut={loggingOut}

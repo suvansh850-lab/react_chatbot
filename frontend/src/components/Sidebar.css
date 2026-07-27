@@ -80,6 +80,16 @@
   font-weight: 400;
 }
 
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.notebooks-section {
+  margin-bottom: 20px;
+}
+
 .history-section {
   flex: 1;
   overflow-y: auto;
@@ -94,19 +104,74 @@
   border-radius: 4px;
 }
 
-.history-section h3 {
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.section-header-title {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  margin-bottom: 8px;
   color: #7B5FD4;
-  padding-left: 10px;
+  padding-left: 8px;
   white-space: nowrap;
 }
 
-.history-item {
-  padding: 9px 12px;
+.new-chat-icon-btn {
+  background: none;
+  border: none;
+  color: #7B5FD4;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.new-chat-icon-btn:hover {
+  background: rgba(109, 79, 194, 0.1);
+}
+
+.new-chat-icon-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.new-notebook-btn {
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  color: #444;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.15s ease, color 0.15s ease;
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+.new-notebook-btn:hover {
+  background: #f6f2ff;
+  color: #6D4FC2;
+}
+
+.new-notebook-btn .icon {
+  font-size: 18px;
+  color: #6D4FC2;
+}
+
+.sidebar-item {
+  padding: 8px 10px;
   margin-bottom: 2px;
   border-radius: 6px;
   cursor: pointer;
@@ -121,14 +186,57 @@
   gap: 8px;
 }
 
-.history-item .chat-title-text {
+.sidebar-item .item-icon {
+  font-size: 18px;
+  color: #7B5FD4;
+  flex-shrink: 0;
+}
+
+.sidebar-item .item-title-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
 }
 
-.history-item .action-buttons {
+.recent-blue-dot {
+  width: 8px;
+  height: 8px;
+  background: #3b82f6;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-left: auto;
+  box-shadow: 0 0 4px rgba(59, 130, 246, 0.4);
+}
+
+.all-notebooks-btn {
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: #777;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.all-notebooks-btn:hover {
+  background: #f6f2ff;
+  color: #6D4FC2;
+}
+
+.all-notebooks-btn .icon {
+  font-size: 18px;
+  color: #777;
+}
+
+.sidebar-item .action-buttons {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -136,13 +244,13 @@
   transition: opacity 0.15s ease;
 }
 
-.history-item:hover .action-buttons,
-.history-item.active .action-buttons {
+.sidebar-item:hover .action-buttons,
+.sidebar-item.active .action-buttons {
   opacity: 1;
 }
 
-.history-item .rename-btn,
-.history-item .delete-btn {
+.sidebar-item .rename-btn,
+.sidebar-item .delete-btn {
   background: none;
   border: none;
   font-size: 16px;
@@ -156,17 +264,17 @@
   transition: color 0.15s ease, background 0.15s ease;
 }
 
-.history-item .rename-btn:hover {
+.sidebar-item .rename-btn:hover {
   color: #6D4FC2;
   background: rgba(109, 79, 194, 0.1);
 }
 
-.history-item .delete-btn:hover {
+.sidebar-item .delete-btn:hover {
   color: #e74c3c;
   background: rgba(231, 76, 60, 0.1);
 }
 
-.history-item .rename-input {
+.sidebar-item .rename-input {
   width: 100%;
   border: 1px solid #6D4FC2;
   background: #fff;
@@ -178,23 +286,23 @@
   font-family: inherit;
 }
 
-.history-item:hover {
+.sidebar-item:hover {
   background: #f6f2ff;
   color: #6D4FC2;
 }
 
-.history-item.active {
+.sidebar-item.active {
   background: #f6f2ff;
   color: #6D4FC2;
   font-weight: 600;
 }
 
-.empty-history {
+.empty-section-text {
   color: #bbb;
-  font-size: 13px;
+  font-size: 12.5px;
   font-style: italic;
-  text-align: center;
-  margin-top: 16px;
+  padding-left: 10px;
+  margin: 4px 0;
   white-space: nowrap;
 }
 
