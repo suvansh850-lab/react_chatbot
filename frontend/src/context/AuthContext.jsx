@@ -9,12 +9,15 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         const getSession = async () => {
-            const {
-                data: { session },
-            } = await authService.getSession();
-
-            setUser(session?.user ?? null);
-            setLoading(false);
+            try {
+                const res = await authService.getSession();
+                setUser(res?.data?.session?.user ?? null);
+            } catch (err) {
+                console.error("Failed to retrieve auth session:", err);
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
 
             // Clean up OAuth hash fragment from URL
             if (window.location.hash) {
@@ -32,7 +35,11 @@ export function AuthProvider({ children }) {
             setUser(session?.user ?? null);
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            if (subscription && typeof subscription.unsubscribe === "function") {
+                subscription.unsubscribe();
+            }
+        };
     }, []);
 
     return (

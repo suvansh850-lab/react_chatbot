@@ -42,7 +42,7 @@ export const authService = {
   },
 
   onAuthStateChange(callback) {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(callback);
-    return subscription;
+    const res = supabase.auth.onAuthStateChange(callback);
+    return res?.data?.subscription ?? res?.subscription ?? { unsubscribe: () => {} };
   }
 };
