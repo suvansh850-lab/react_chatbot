@@ -181,6 +181,28 @@ function parseToolCallFromText(text) {
   }
 
   const trimmed = text.trim();
+
+  // 1. Check for XML format: <function.tool_name JSON_ARGS></function> or <function=tool_name>JSON_ARGS</function>
+  const xmlMatch = trimmed.match(/<function\.?=?([a-zA-Z0-9_\-]+)\s+([\s\S]*?)\s*><\/function>/i)
+                || trimmed.match(/<function\.?=?([a-zA-Z0-9_\-]+)>([\s\S]*?)<\/function>/i);
+  
+  if (xmlMatch) {
+    const name = xmlMatch[1];
+    const argsText = xmlMatch[2].trim();
+    let args = {};
+    try {
+      args = JSON.parse(argsText);
+    } catch (e) {
+      args = { query: argsText };
+    }
+    return {
+      id: `parsed_tool_call_${Date.now()}`,
+      name,
+      args,
+    };
+  }
+
+  // 2. Fallback to standard JSON format
   if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) {
     return null;
   }

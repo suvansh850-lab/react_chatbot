@@ -684,3 +684,39 @@ body {
 .chat-footer .chat-form-unified .send-btn:active {
   transform: scale(0.95);
 }
+
+.chat-footer .chat-form-unified .mic-btn {
+  background: transparent;
+  color: #666;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  margin-right: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, transform 0.2s ease;
+  margin-left: auto;
+}
+
+.chat-footer .chat-form-unified .mic-btn:hover {
+  color: #6D4FC2;
+}
+
+.chat-footer .chat-form-unified .mic-btn.listening {
+  color: #d93025;
+  animation: mic-pulse 1.2s infinite alternate;
+}
+
+@keyframes mic-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
