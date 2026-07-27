@@ -42,10 +42,10 @@ async function parseFile(fileBuffer, mimeType, originalName) {
     throw new Error(`Unsupported file type: ${extension}`);
   }
   
-  // Truncate to 25,000 characters to stay within Groq free-tier TPM and TPM rate limits
-  if (text.length > 25000) {
-    console.log(`[File Parser] Truncating text from ${text.length} to 25000 characters`);
-    text = text.substring(0, 25000) + "\n\n[Content truncated to fit context limits...]";
+  // Truncate to 10,000 characters to stay within Groq free-tier TPM rate limits
+  if (text.length > 10000) {
+    console.log(`[File Parser] Truncating text from ${text.length} to 10000 characters`);
+    text = text.substring(0, 10000) + "\n\n[Content truncated to fit context limits...]";
   }
   
   return text;

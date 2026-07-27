@@ -130,8 +130,8 @@ async function runAgent(messages, conversationId) {
           fileContext = "\n\nUploaded Files in this conversation:\n" + 
             dbResult.rows.map(row => {
               let content = row.file_content || "";
-              if (content.length > 25000) {
-                content = content.substring(0, 25000) + "\n\n[Content truncated to fit context limits...]";
+              if (content.length > 10000) {
+                content = content.substring(0, 10000) + "\n\n[Content truncated to fit context limits...]";
               }
               return `--- File: ${row.file_name} ---\n${content}`;
             }).join("\n\n");
