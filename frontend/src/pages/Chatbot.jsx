@@ -432,6 +432,7 @@ const Chatbot = () => {
 
   // ── Render ───────────────────────────────────────────────────
   return (
+    <>
     <div className="container">
       {isSidebarOpen && (
         <button
@@ -538,6 +539,7 @@ const Chatbot = () => {
       chatHistory={chatHistory}
       setChatHistory={setChatHistory}
     />
+    </>
   );
 };
 
