@@ -24,10 +24,18 @@ const ChatForm = ({ chatHistory, setChatHistory, generateBotResponse, onFileUplo
     };
 
     return (
-        <div style={{ width: '100%' }}>
-            {/* Attached files preview */}
+        <form className='chat-form-unified' onSubmit={handleFormSubmit}>
+            <input 
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+                accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.md,.json"
+            />
+            
+            {/* Attached files preview inside unified input border */}
             {(attachedFiles.length > 0 || isUploading) && (
-                <div className="attached-files-container">
+                <div className="attached-files-preview-box">
                     {attachedFiles.map((name, idx) => (
                         <div key={idx} className="file-badge">
                             <span className="material-symbols-outlined file-badge-icon">description</span>
@@ -37,20 +45,13 @@ const ChatForm = ({ chatHistory, setChatHistory, generateBotResponse, onFileUplo
                     {isUploading && (
                         <div className="file-badge uploading-badge">
                             <span className="material-symbols-outlined file-badge-icon">upload</span>
-                            <span className="file-badge-name">Uploading file...</span>
+                            <span className="file-badge-name">Uploading...</span>
                         </div>
                     )}
                 </div>
             )}
 
-            <form className='chat-form' onSubmit={handleFormSubmit}>
-                <input 
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    style={{ display: 'none' }}
-                    accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.md,.json"
-                />
+            <div className="input-row">
                 <button 
                     type="button" 
                     className="attach-btn material-symbols-outlined" 
@@ -71,11 +72,11 @@ const ChatForm = ({ chatHistory, setChatHistory, generateBotResponse, onFileUplo
                     name="chat-message"
                     required 
                 />
-                <button className="material-symbols-rounded">
+                <button className="material-symbols-rounded send-btn">
                     arrow_upward
                 </button>
-            </form>
-        </div>
+            </div>
+        </form>
     );
 };
 
