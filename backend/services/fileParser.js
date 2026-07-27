@@ -16,7 +16,7 @@ async function parseFile(fileBuffer, mimeType, originalName) {
   
   if (extension === "pdf" || mimeType === "application/pdf") {
     const parser = new PDFParse(fileBuffer);
-    const data = await parser.parse();
+    const data = await parser.getText();
     return data.text;
   }
   
