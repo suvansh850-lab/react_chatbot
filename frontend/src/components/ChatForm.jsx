@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 
 const MODELS = [
     { label: 'Groq',   value: 'groq/llama-3.3-70b-versatile' },
-    { label: 'Gemini', value: 'gemini/gemini-2.0-flash' },
+    { label: 'Gemini', value: 'gemini/gemini-2.5-flash' },
 ];
 
 const ChatForm = ({ chatHistory, setChatHistory, generateBotResponse, onFileUpload, attachedFiles = [], isUploading = false, selectedModel, setSelectedModel }) => {
