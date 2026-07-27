@@ -627,7 +627,7 @@ body {
 
 .chat-footer .chat-form-unified .chat-input {
   height: 38px;
-  width: 100%;
+  flex: 1;
   border: none;
   outline: none;
   background: none;
@@ -698,7 +698,7 @@ body {
   align-items: center;
   justify-content: center;
   transition: color 0.2s ease, transform 0.2s ease;
-  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .chat-footer .chat-form-unified .mic-btn:hover {
