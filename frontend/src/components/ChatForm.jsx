@@ -84,10 +84,38 @@ const ChatForm = ({ chatHistory, setChatHistory, generateBotResponse, onFileUplo
                 disabled={isUploading}
             />
 
-            {/* Single row: model pill | divider | input | attach | mic | send */}
+            {/* Single row: attach -> text input -> model selector -> mic -> send */}
             <div className="input-row">
 
-                {/* Model Selector Pill */}
+                {/* 1. Attach — leftmost */}
+                <button
+                    type="button"
+                    className="attach-btn material-symbols-outlined"
+                    onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                    title="Attach file"
+                    disabled={isUploading}
+                    style={{ opacity: isUploading ? 0.5 : 1, cursor: isUploading ? 'not-allowed' : 'pointer' }}
+                >
+                    {isUploading ? 'sync' : 'attachment'}
+                </button>
+
+                {/* 2. Text input */}
+                <input
+                    type="text"
+                    placeholder={isUploading ? "Uploading file..." : isListening ? "Listening..." : "Type your message..."}
+                    className="chat-input"
+                    ref={inputRef}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                    name="chat-message"
+                    required
+                    disabled={isUploading}
+                    style={{ cursor: isUploading ? 'not-allowed' : 'text' }}
+                />
+
+                {/* 3. Model Selector */}
                 <div className="inline-model-selector" ref={dropdownRef}>
                     <button
                         type="button"
@@ -121,38 +149,7 @@ const ChatForm = ({ chatHistory, setChatHistory, generateBotResponse, onFileUplo
                     )}
                 </div>
 
-                {/* Vertical divider */}
-                <span className="input-divider" />
-
-                {/* Text input */}
-                <input
-                    type="text"
-                    placeholder={isUploading ? "Uploading file..." : isListening ? "Listening..." : "Type your message..."}
-                    className="chat-input"
-                    ref={inputRef}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck="false"
-                    name="chat-message"
-                    required
-                    disabled={isUploading}
-                    style={{ cursor: isUploading ? 'not-allowed' : 'text' }}
-                />
-
-                {/* Attach */}
-                <button
-                    type="button"
-                    className="attach-btn material-symbols-outlined"
-                    onClick={() => fileInputRef.current && fileInputRef.current.click()}
-                    title="Attach file"
-                    disabled={isUploading}
-                    style={{ opacity: isUploading ? 0.5 : 1, cursor: isUploading ? 'not-allowed' : 'pointer' }}
-                >
-                    {isUploading ? 'sync' : 'attachment'}
-                </button>
-
-                {/* Mic */}
+                {/* 4. Mic */}
                 <button
                     type="button"
                     className={`mic-btn material-symbols-outlined ${isListening ? 'listening' : ''}`}
@@ -164,7 +161,7 @@ const ChatForm = ({ chatHistory, setChatHistory, generateBotResponse, onFileUplo
                     mic
                 </button>
 
-                {/* Send */}
+                {/* 5. Send */}
                 <button
                     className="material-symbols-rounded send-btn"
                     disabled={isUploading}

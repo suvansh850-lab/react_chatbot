@@ -222,3 +222,4 @@ const VoiceAssistant = ({ isOpen, onClose, generateBotResponse, chatHistory, set
 };
 
 export default VoiceAssistant;
+gi
