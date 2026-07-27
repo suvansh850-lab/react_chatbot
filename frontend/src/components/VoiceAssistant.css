@@ -1,0 +1,179 @@
+/* ── Voice Assistant Overlay ─────────────────────────── */
+.va-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.96);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: va-fade-in 0.25s ease;
+}
+
+@keyframes va-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.va-modal {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+/* ── Close button ─────────────────────────────────────── */
+.va-close-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #fff;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.va-close-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Transcript area ─────────────────────────────────── */
+.va-transcript-area {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
+  padding: 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 45vh;
+  overflow-y: auto;
+}
+
+.va-user-bubble {
+  align-self: flex-end;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 22px 22px 6px 22px;
+  font-size: 1rem;
+  max-width: 70%;
+  line-height: 1.5;
+  backdrop-filter: blur(4px);
+}
+
+.va-bot-text {
+  align-self: flex-start;
+  color: #e8e8e8;
+  font-size: 1rem;
+  max-width: 80%;
+  line-height: 1.6;
+}
+
+/* ── Thinking dots ───────────────────────────────────── */
+.va-thinking-dots {
+  align-self: flex-start;
+  display: flex;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.va-thinking-dots span {
+  width: 8px;
+  height: 8px;
+  background: #6D4FC2;
+  border-radius: 50%;
+  animation: dot-bounce 1.4s infinite ease-in-out both;
+}
+
+.va-thinking-dots span:nth-child(1) { animation-delay: -0.32s; }
+.va-thinking-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+  40%           { transform: scale(1);   opacity: 1; }
+}
+
+/* ── Animated Orb ────────────────────────────────────── */
+.va-orb-container {
+  width: 160px;
+  height: 160px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.va-orb {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  position: relative;
+  transition: transform 0.08s ease;
+  box-shadow:
+    0 0 60px rgba(109, 79, 194, 0.35),
+    0 0 120px rgba(109, 79, 194, 0.15);
+}
+
+/* Idle – soft purple/white gradient */
+.va-orb.idle {
+  background: radial-gradient(circle at 38% 38%, #fff 0%, #a89fe0 40%, #6D4FC2 80%, #3a2580 100%);
+}
+
+/* Listening – brighter blue-purple */
+.va-orb.listening {
+  background: radial-gradient(circle at 38% 38%, #fff 0%, #8ec4ff 30%, #5b8df6 60%, #3a52c4 100%);
+  box-shadow:
+    0 0 80px rgba(91, 141, 246, 0.55),
+    0 0 160px rgba(91, 141, 246, 0.2);
+}
+
+/* Thinking – muted indigo */
+.va-orb.thinking {
+  background: radial-gradient(circle at 38% 38%, #d0d0ff 0%, #7b6dbd 40%, #4a3a8a 100%);
+  animation: orb-pulse 1.6s infinite alternate ease-in-out;
+}
+
+/* Speaking – vivid gradient shift */
+.va-orb.speaking {
+  background: radial-gradient(circle at 38% 38%, #fff 0%, #bdb0ff 25%, #7A5CFA 55%, #4a2eb0 100%);
+  box-shadow:
+    0 0 80px rgba(122, 92, 250, 0.6),
+    0 0 160px rgba(122, 92, 250, 0.25);
+}
+
+.va-orb-inner {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.55) 0%, transparent 70%);
+}
+
+@keyframes orb-pulse {
+  from { box-shadow: 0 0 40px rgba(74, 58, 138, 0.4), 0 0 80px rgba(74, 58, 138, 0.15); }
+  to   { box-shadow: 0 0 80px rgba(122, 92, 250, 0.55), 0 0 160px rgba(122, 92, 250, 0.25); }
+}
+
+/* ── Status Label ────────────────────────────────────── */
+.va-status-label {
+  color: rgba(255,255,255,0.55);
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  margin: 0;
+  text-align: center;
+  user-select: none;
+}

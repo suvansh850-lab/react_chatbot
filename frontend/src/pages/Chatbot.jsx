@@ -6,6 +6,7 @@ import ChatBotIcon from '../components/ChatBotIcon';
 import ChatForm from '../components/ChatForm';
 import ChatMessage from '../components/ChatMessage';
 import Sidebar from '../components/Sidebar';
+import VoiceAssistant from '../components/VoiceAssistant';
 import { CompanyInfo } from '../CompanyInfo';
 
 const EMPTY_HISTORY = [];
@@ -58,6 +59,7 @@ const Chatbot = () => {
   const [loggingOut, setLoggingOut] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isVoiceOpen, setIsVoiceOpen] = useState(false);
   const chatBodyRef = useRef();
 
   // Derived state
@@ -239,6 +241,16 @@ const Chatbot = () => {
       if (res.ok && data.success) {
         setAttachedFiles(prev => [...prev, data.fileName]);
         
+        const userFileMsg = {
+          role: "user",
+          text: `Uploaded file: ${file.name}`,
+          fileCard: {
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type
+          }
+        };
+
         const confirmMsg = {
           role: "model",
           text: `📎 **File uploaded successfully:** \`${data.fileName}\`\n\nI have parsed the file and it is ready for analysis. What would you like to know about it?`
@@ -248,7 +260,7 @@ const Chatbot = () => {
           if (c.id === currentChatId) {
             return {
               ...c,
-              history: [...c.history, confirmMsg]
+              history: [...c.history, userFileMsg, confirmMsg]
             };
           }
           return c;
@@ -453,13 +465,23 @@ const Chatbot = () => {
             <ChatBotIcon />
             <h2 className="logo-text">Morepen Analyst Chatbot</h2>
           </div>
-          <button
-            className="share-chat-btn material-symbols-outlined"
-            onClick={shareCurrentChat}
-            title="Share chat"
-          >
-            share
-          </button>
+          <div className="header-actions">
+            <button
+              className="voice-assist-btn"
+              onClick={() => setIsVoiceOpen(true)}
+              title="Start voice assistant"
+            >
+              <span className="material-symbols-outlined" style={{fontSize: '18px', verticalAlign: 'middle', marginRight: '4px'}}>graphic_eq</span>
+              Start Voice
+            </button>
+            <button
+              className="share-chat-btn material-symbols-outlined"
+              onClick={shareCurrentChat}
+              title="Share chat"
+            >
+              share
+            </button>
+          </div>
         </div>
 
         {/* Chat body */}
@@ -483,6 +505,15 @@ const Chatbot = () => {
         </div>
       </div>
     </div>
+
+    {/* Voice Assistant Modal */}
+    <VoiceAssistant
+      isOpen={isVoiceOpen}
+      onClose={() => setIsVoiceOpen(false)}
+      generateBotResponse={generateBotResponse}
+      chatHistory={chatHistory}
+      setChatHistory={setChatHistory}
+    />
   );
 };
 
