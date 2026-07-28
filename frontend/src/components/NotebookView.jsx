@@ -38,7 +38,6 @@ const NotebookView = ({
         }
     };
 
-    const [isParsingWebsite, setIsParsingWebsite] = useState(false);
 
     const handleSourceFileUpload = (file) => {
         if (onFileUpload) {
@@ -61,52 +60,15 @@ const NotebookView = ({
         }
     };
 
-    const handleAddWebsite = async (url) => {
-        setIsParsingWebsite(true);
-        try {
-            const getBackendRoot = () => {
-                if (import.meta.env.VITE_API_URL) {
-                    return import.meta.env.VITE_API_URL.replace(/\/$/, '').replace(/\/api$/, '') + '/api/chat';
-                }
-                return `${window.location.origin}/api/chat`;
-            };
-
-            const backendUrl = `${getBackendRoot()}/parse-website`;
-            const res = await fetch(backendUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url })
-            });
-
-            const data = await res.json();
-            if (res.ok && data.success) {
-                if (onAddSource) {
-                    onAddSource({
-                        id: Date.now(),
-                        name: data.title || url,
-                        type: 'website',
-                        url: url,
-                        content: `Website Title: ${data.title}\nURL: ${url}\n\nWebpage Contents:\n${data.text}`
-                    });
-                }
-            } else {
-                if (onAddSource) {
-                    onAddSource({ id: Date.now(), name: url, type: 'website', url: url, content: `Website URL: ${url}` });
-                }
-            }
-        } catch (err) {
-            console.error("Website fetch error:", err);
-            if (onAddSource) {
-                onAddSource({ id: Date.now(), name: url, type: 'website', url: url, content: `Website URL: ${url}` });
-            }
-        } finally {
-            setIsParsingWebsite(false);
-        }
-    };
-
     const handleAddTextNote = (title, text) => {
         if (onAddSource) {
             onAddSource({ id: Date.now(), name: title || 'Note', type: 'note', content: text });
+        }
+    };
+
+    const handleAddDriveLink = (link) => {
+        if (onAddSource) {
+            onAddSource({ id: Date.now(), name: link, type: 'file', content: `Google Drive Link: ${link}` });
         }
     };
 
@@ -128,10 +90,9 @@ const NotebookView = ({
                 onFileUpload={handleSourceFileUpload}
                 isUploading={isUploading}
                 sources={sources}
-                onAddWebsite={handleAddWebsite}
                 onAddTextNote={handleAddTextNote}
                 onDeleteSource={handleDeleteSource}
-                isParsing={isParsingWebsite}
+                onAddDriveLink={handleAddDriveLink}
             />
 
             {/* Top header row */}

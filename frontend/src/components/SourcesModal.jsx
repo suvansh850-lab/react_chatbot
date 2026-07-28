@@ -1,28 +1,25 @@
 import React, { useState, useRef } from 'react';
 import './SourcesModal.css';
 
+// Google Drive API Configuration (Configured in environment variables / code)
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || "";
+
 const SourcesModal = ({
     isOpen,
     onClose,
     onFileUpload,
     isUploading = false,
     sources = [],
-    onAddWebsite,
     onAddTextNote,
     onDeleteSource,
-    isParsing = false
+    onAddDriveLink
 }) => {
     const fileInputRef = useRef();
-    const [activeView, setActiveView] = useState('main'); // 'main' | 'website' | 'text' | 'drive'
-    const [websiteUrl, setWebsiteUrl] = useState('');
+    const [activeView, setActiveView] = useState('main'); // 'main' | 'text' | 'drive'
     const [copiedText, setCopiedText] = useState('');
     const [textTitle, setTextTitle] = useState('');
     const [driveUrl, setDriveUrl] = useState('');
-
-    // Google Drive API Credentials State
-    const [googleClientId, setGoogleClientId] = useState(() => localStorage.getItem('google_client_id') || '');
-    const [googleApiKey, setGoogleApiKey] = useState(() => localStorage.getItem('google_api_key') || '');
-    const [savedMsg, setSavedMsg] = useState('');
 
     if (!isOpen) return null;
 
@@ -38,31 +35,8 @@ const SourcesModal = ({
         setActiveView('drive');
     };
 
-    const handleSaveGoogleCredentials = (e) => {
-        e.preventDefault();
-        localStorage.setItem('google_client_id', googleClientId.trim());
-        localStorage.setItem('google_api_key', googleApiKey.trim());
-        setSavedMsg('Credentials saved successfully!');
-        setTimeout(() => setSavedMsg(''), 3000);
-    };
-
-    const handleLaunchDrivePicker = () => {
-        if (!googleClientId.trim() || !googleApiKey.trim()) {
-            alert("Please enter and save your Google Client ID and API Key below first.");
-            return;
-        }
-        // Launch Google Picker API or open Google Drive window
-        window.open(`https://drive.google.com`, '_blank');
-    };
-
-    const handleAddWebsiteSubmit = async (e) => {
-        e.preventDefault();
-        if (!websiteUrl.trim()) return;
-        if (onAddWebsite) {
-            await onAddWebsite(websiteUrl.trim());
-        }
-        setWebsiteUrl('');
-        setActiveView('main');
+    const handleLaunchDrive = () => {
+        window.open('https://drive.google.com', '_blank');
     };
 
     const handleAddTextSubmit = (e) => {
@@ -79,8 +53,8 @@ const SourcesModal = ({
     const handleAddDriveSubmit = (e) => {
         e.preventDefault();
         if (!driveUrl.trim()) return;
-        if (onAddWebsite) {
-            onAddWebsite(driveUrl.trim());
+        if (onAddDriveLink) {
+            onAddDriveLink(driveUrl.trim());
         }
         setDriveUrl('');
         setActiveView('main');
@@ -134,15 +108,6 @@ const SourcesModal = ({
 
                         <button
                             type="button"
-                            className={`source-option-btn ${activeView === 'website' ? 'active' : ''}`}
-                            onClick={() => setActiveView('website')}
-                        >
-                            <span className="material-symbols-outlined icon">language</span>
-                            <span>Add websites</span>
-                        </button>
-
-                        <button
-                            type="button"
                             className={`source-option-btn ${activeView === 'text' ? 'active' : ''}`}
                             onClick={() => setActiveView('text')}
                         >
@@ -153,28 +118,7 @@ const SourcesModal = ({
 
                     {/* Right Panel View */}
                     <div className="sources-content-panel">
-                        {activeView === 'website' ? (
-                            <form className="source-form-view" onSubmit={handleAddWebsiteSubmit}>
-                                <h3>Add Website Source</h3>
-                                <p>Enter a public website URL for Morepen AI to parse and reference:</p>
-                                <input
-                                    type="url"
-                                    className="source-input"
-                                    placeholder="https://example.com/article"
-                                    value={websiteUrl}
-                                    onChange={(e) => setWebsiteUrl(e.target.value)}
-                                    required
-                                    autoFocus
-                                    disabled={isParsing}
-                                />
-                                <div className="source-form-actions">
-                                    <button type="button" className="cancel-btn" onClick={() => setActiveView('main')} disabled={isParsing}>Cancel</button>
-                                    <button type="submit" className="submit-btn" disabled={isParsing}>
-                                        {isParsing ? 'Parsing website...' : 'Add Website'}
-                                    </button>
-                                </div>
-                            </form>
-                        ) : activeView === 'text' ? (
+                        {activeView === 'text' ? (
                             <form className="source-form-view" onSubmit={handleAddTextSubmit}>
                                 <h3>Add Copied Text / Note</h3>
                                 <p>Paste notes or raw text directly into your notebook:</p>
@@ -200,40 +144,25 @@ const SourcesModal = ({
                             </form>
                         ) : activeView === 'drive' ? (
                             <div className="source-form-view">
-                                <h3>Google Drive Integration</h3>
-                                <p>Enter your Google Cloud credentials (Client ID & Secret Key) to connect Google Drive:</p>
+                                <h3>Add from Google Drive</h3>
+                                <p>Open your Google Drive to pick files, or paste a shareable Google Drive file link below:</p>
 
-                                <form onSubmit={handleSaveGoogleCredentials} className="drive-creds-form">
-                                    <label className="drive-label">Google Client ID:</label>
-                                    <input
-                                        type="text"
-                                        className="source-input"
-                                        placeholder="YOUR_CLIENT_ID.apps.googleusercontent.com"
-                                        value={googleClientId}
-                                        onChange={(e) => setGoogleClientId(e.target.value)}
-                                    />
-
-                                    <label className="drive-label" style={{ marginTop: '8px' }}>Google API Key / Secret Key:</label>
-                                    <input
-                                        type="password"
-                                        className="source-input"
-                                        placeholder="AIzaSy..."
-                                        value={googleApiKey}
-                                        onChange={(e) => setGoogleApiKey(e.target.value)}
-                                    />
-
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '12px' }}>
-                                        <button type="submit" className="submit-btn" style={{ padding: '6px 14px' }}>
-                                            Save Credentials
-                                        </button>
-                                        {savedMsg && <span style={{ color: '#16a34a', fontSize: '0.85rem', fontWeight: '600' }}>{savedMsg}</span>}
-                                    </div>
-                                </form>
+                                <div style={{ margin: '14px 0' }}>
+                                    <button
+                                        type="button"
+                                        className="submit-btn"
+                                        onClick={handleLaunchDrive}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px' }}
+                                    >
+                                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>open_in_new</span>
+                                        Open Google Drive
+                                    </button>
+                                </div>
 
                                 <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '16px 0' }} />
 
-                                <form onSubmit={handleAddDriveSubmit} className="drive-picker-section">
-                                    <p style={{ fontWeight: '500', color: '#2c2c2c' }}>Or paste a Google Drive file link directly:</p>
+                                <form onSubmit={handleAddDriveSubmit}>
+                                    <p style={{ fontWeight: '500', color: '#2c2c2c', marginBottom: '8px' }}>Paste Google Drive Link:</p>
                                     <input
                                         type="url"
                                         className="source-input"
@@ -244,15 +173,7 @@ const SourcesModal = ({
                                     />
 
                                     <div className="source-form-actions">
-                                        <button
-                                            type="button"
-                                            className="cancel-btn"
-                                            onClick={handleLaunchDrivePicker}
-                                            style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#f4f0ff', color: '#6D4FC2', border: '1px solid #d6c7ff' }}
-                                        >
-                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>open_in_new</span>
-                                            Launch Drive
-                                        </button>
+                                        <button type="button" className="cancel-btn" onClick={() => setActiveView('main')}>Cancel</button>
                                         <button type="submit" className="submit-btn">Add Drive Link</button>
                                     </div>
                                 </form>
@@ -273,7 +194,7 @@ const SourcesModal = ({
                                             return (
                                                 <div key={index} className="source-card">
                                                     <span className="material-symbols-outlined source-card-icon">
-                                                        {type === 'website' ? 'language' : type === 'note' ? 'description' : 'insert_drive_file'}
+                                                        {type === 'note' ? 'description' : 'insert_drive_file'}
                                                     </span>
                                                     <div className="source-card-info">
                                                         <span className="source-card-title">{name}</span>
