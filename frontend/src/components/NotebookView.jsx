@@ -94,15 +94,11 @@ const NotebookView = ({
                     });
                 }
             } else {
-                if (onAddSource) {
-                    onAddSource({ id: Date.now(), name: link, type: 'file', content: `Google Drive Link: ${link}` });
-                }
+                alert(data.error || "Failed to import Google Drive file. Make sure file permission is set to 'Anyone with the link can view'.");
             }
         } catch (err) {
             console.error("Google Drive import error:", err);
-            if (onAddSource) {
-                onAddSource({ id: Date.now(), name: link, type: 'file', content: `Google Drive Link: ${link}` });
-            }
+            alert("Error importing Google Drive file: " + err.message);
         }
     };
 

@@ -262,39 +262,74 @@ async function parseWebsite(req, res) {
 async function parseGoogleDrive(req, res) {
   const { url } = req.body;
   if (!url) {
-    return res.status(400).json({ success: false, error: "URL is required" });
+    return res.status(400).json({ success: false, error: "URL or File ID is required" });
   }
 
   try {
-    const match = url.match(/(?:file\/d\/|document\/d\/|presentation\/d\/|spreadsheets\/d\/|id=)([a-zA-Z0-9_-]+)/);
-    const fileId = match ? match[1] : null;
+    let fileId = null;
+    const cleanUrl = url.trim();
+    const match = cleanUrl.match(/(?:file\/d\/|document\/d\/|presentation\/d\/|spreadsheets\/d\/|id=)([a-zA-Z0-9_-]+)/);
+    
+    if (match) {
+      fileId = match[1];
+    } else if (/^[a-zA-Z0-9_-]{10,}$/.test(cleanUrl)) {
+      fileId = cleanUrl;
+    }
 
     if (!fileId) {
-      return res.status(400).json({ success: false, error: "Could not extract File ID from Google Drive URL." });
+      return res.status(400).json({ success: false, error: "Invalid Google Drive URL or File ID." });
     }
 
-    const exportUrl = `https://docs.google.com/document/d/${fileId}/export?format=txt`;
-    let response = await fetch(exportUrl);
-
-    if (!response.ok) {
-      const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-      response = await fetch(directUrl);
+    let exportUrls = [];
+    if (cleanUrl.includes("spreadsheets")) {
+      exportUrls.push(`https://docs.google.com/spreadsheets/d/${fileId}/export?format=csv`);
+    } else if (cleanUrl.includes("presentation")) {
+      exportUrls.push(`https://docs.google.com/presentation/d/${fileId}/export/txt`);
     }
 
-    if (!response.ok) {
-      throw new Error("Make sure the Google Drive file permissions are set to 'Anyone with the link can view'.");
+    exportUrls.push(`https://docs.google.com/document/d/${fileId}/export?format=txt`);
+    exportUrls.push(`https://drive.google.com/uc?export=download&id=${fileId}`);
+
+    let textContent = "";
+    let fetchSuccess = false;
+
+    for (const expUrl of exportUrls) {
+      try {
+        const resp = await fetch(expUrl, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          }
+        });
+        if (resp.ok) {
+          const rawText = await resp.text();
+          // Check if Google returned a Sign-in HTML redirect instead of file text
+          if (!rawText.includes("accounts.google.com") && !rawText.includes("identifierId") && !rawText.includes("Sign in - Google Accounts")) {
+            textContent = rawText;
+            fetchSuccess = true;
+            break;
+          }
+        }
+      } catch (e) {
+        console.warn(`[Google Drive] Export URL attempt failed (${expUrl}):`, e.message);
+      }
     }
 
-    let textContent = await response.text();
-
-    if (textContent.includes("<!DOCTYPE html") || textContent.includes("<html")) {
-      textContent = textContent
-        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
+    if (!fetchSuccess || !textContent) {
+      return res.status(400).json({
+        success: false,
+        error: "Could not read Google Drive file. Please ensure the file permissions are set to 'Anyone with the link can view'."
+      });
     }
+
+    // Clean up HTML tags, scripts, null bytes and control characters
+    textContent = textContent
+      .replace(/\0/g, "")
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, "")
+      .replace(/\s+/g, ' ')
+      .trim();
 
     const trimmedText = textContent.substring(0, 15000);
 
