@@ -9,7 +9,8 @@ const SourcesModal = ({
     sources = [],
     onAddWebsite,
     onAddTextNote,
-    onDeleteSource
+    onDeleteSource,
+    isParsing = false
 }) => {
     const fileInputRef = useRef();
     const [activeView, setActiveView] = useState('main'); // 'main' | 'website' | 'text' | 'drive'
@@ -28,11 +29,17 @@ const SourcesModal = ({
         e.target.value = "";
     };
 
-    const handleAddWebsiteSubmit = (e) => {
+    const handleDriveOptionClick = () => {
+        setActiveView('drive');
+        // Open Google Drive in new tab
+        window.open('https://drive.google.com', '_blank');
+    };
+
+    const handleAddWebsiteSubmit = async (e) => {
         e.preventDefault();
         if (!websiteUrl.trim()) return;
         if (onAddWebsite) {
-            onAddWebsite(websiteUrl.trim());
+            await onAddWebsite(websiteUrl.trim());
         }
         setWebsiteUrl('');
         setActiveView('main');
@@ -99,7 +106,7 @@ const SourcesModal = ({
                         <button
                             type="button"
                             className={`source-option-btn ${activeView === 'drive' ? 'active' : ''}`}
-                            onClick={() => setActiveView('drive')}
+                            onClick={handleDriveOptionClick}
                         >
                             <span className="material-symbols-outlined icon drive-icon">add_to_drive</span>
                             <span>Add from Drive</span>
@@ -138,10 +145,13 @@ const SourcesModal = ({
                                     onChange={(e) => setWebsiteUrl(e.target.value)}
                                     required
                                     autoFocus
+                                    disabled={isParsing}
                                 />
                                 <div className="source-form-actions">
-                                    <button type="button" className="cancel-btn" onClick={() => setActiveView('main')}>Cancel</button>
-                                    <button type="submit" className="submit-btn">Add Website</button>
+                                    <button type="button" className="cancel-btn" onClick={() => setActiveView('main')} disabled={isParsing}>Cancel</button>
+                                    <button type="submit" className="submit-btn" disabled={isParsing}>
+                                        {isParsing ? 'Parsing website...' : 'Add Website'}
+                                    </button>
                                 </div>
                             </form>
                         ) : activeView === 'text' ? (
@@ -170,8 +180,8 @@ const SourcesModal = ({
                             </form>
                         ) : activeView === 'drive' ? (
                             <form className="source-form-view" onSubmit={handleAddDriveSubmit}>
-                                <h3>Add Google Drive Link</h3>
-                                <p>Paste a shareable Google Drive file link:</p>
+                                <h3>Google Drive Opened in New Tab ↗</h3>
+                                <p>Select your file in Google Drive, or paste the shareable Google Drive link below:</p>
                                 <input
                                     type="url"
                                     className="source-input"
@@ -182,7 +192,15 @@ const SourcesModal = ({
                                     autoFocus
                                 />
                                 <div className="source-form-actions">
-                                    <button type="button" className="cancel-btn" onClick={() => setActiveView('main')}>Cancel</button>
+                                    <button
+                                        type="button"
+                                        className="cancel-btn"
+                                        onClick={() => window.open('https://drive.google.com', '_blank')}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                                    >
+                                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>open_in_new</span>
+                                        Open Drive
+                                    </button>
                                     <button type="submit" className="submit-btn">Add Drive Link</button>
                                 </div>
                             </form>

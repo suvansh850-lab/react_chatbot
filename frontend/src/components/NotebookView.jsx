@@ -12,12 +12,13 @@ const NotebookView = ({
     selectedModel,
     setSelectedModel,
     isUploading = false,
-    setIsVoiceOpen
+    setIsVoiceOpen,
+    onAddSource,
+    onDeleteSource
 }) => {
     const inputRef = useRef();
     const [modelOpen, setModelOpen] = useState(false);
     const [isSourcesModalOpen, setIsSourcesModalOpen] = useState(false);
-    const [notebookSources, setNotebookSources] = useState([]);
 
     const MODELS = [
         { label: 'Groq', value: 'groq/llama-3.3-70b-versatile' },
@@ -25,6 +26,7 @@ const NotebookView = ({
     ];
 
     const currentModelLabel = MODELS.find(m => m.value === selectedModel)?.label || 'Groq';
+    const sources = notebook?.sources || [];
 
     const handleFormSubmit = (e) => {
         e.preventDefault();
@@ -36,23 +38,70 @@ const NotebookView = ({
         }
     };
 
+    const [isParsingWebsite, setIsParsingWebsite] = useState(false);
+
     const handleSourceFileUpload = (file) => {
         if (onFileUpload) {
             onFileUpload(file);
         }
-        setNotebookSources(prev => [...prev, { name: file.name, type: 'file' }]);
+        if (onAddSource) {
+            onAddSource({ id: Date.now(), name: file.name, type: 'file' });
+        }
     };
 
-    const handleAddWebsite = (url) => {
-        setNotebookSources(prev => [...prev, { name: url, type: 'website' }]);
+    const handleAddWebsite = async (url) => {
+        setIsParsingWebsite(true);
+        try {
+            const getBackendRoot = () => {
+                if (import.meta.env.VITE_API_URL) {
+                    return import.meta.env.VITE_API_URL.replace(/\/$/, '').replace(/\/api$/, '') + '/api/chat';
+                }
+                return `${window.location.origin}/api/chat`;
+            };
+
+            const backendUrl = `${getBackendRoot()}/parse-website`;
+            const res = await fetch(backendUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+                if (onAddSource) {
+                    onAddSource({
+                        id: Date.now(),
+                        name: data.title || url,
+                        type: 'website',
+                        url: url,
+                        content: `Website Title: ${data.title}\nURL: ${url}\n\nWebpage Contents:\n${data.text}`
+                    });
+                }
+            } else {
+                if (onAddSource) {
+                    onAddSource({ id: Date.now(), name: url, type: 'website', url: url, content: `Website URL: ${url}` });
+                }
+            }
+        } catch (err) {
+            console.error("Website fetch error:", err);
+            if (onAddSource) {
+                onAddSource({ id: Date.now(), name: url, type: 'website', url: url, content: `Website URL: ${url}` });
+            }
+        } finally {
+            setIsParsingWebsite(false);
+        }
     };
 
     const handleAddTextNote = (title, text) => {
-        setNotebookSources(prev => [...prev, { name: title, type: 'note', content: text }]);
+        if (onAddSource) {
+            onAddSource({ id: Date.now(), name: title || 'Note', type: 'note', content: text });
+        }
     };
 
     const handleDeleteSource = (index) => {
-        setNotebookSources(prev => prev.filter((_, i) => i !== index));
+        if (onDeleteSource) {
+            onDeleteSource(index);
+        }
     };
 
     // Get chats that belong to this notebook
@@ -66,10 +115,11 @@ const NotebookView = ({
                 onClose={() => setIsSourcesModalOpen(false)}
                 onFileUpload={handleSourceFileUpload}
                 isUploading={isUploading}
-                sources={notebookSources}
+                sources={sources}
                 onAddWebsite={handleAddWebsite}
                 onAddTextNote={handleAddTextNote}
                 onDeleteSource={handleDeleteSource}
+                isParsing={isParsingWebsite}
             />
 
             {/* Top header row */}
@@ -82,6 +132,18 @@ const NotebookView = ({
                         onChange={(e) => onRenameNotebook(notebook.id, e.target.value)}
                         placeholder="Untitled notebook"
                     />
+
+                    {/* Active Sources Badges */}
+                    {sources.length > 0 && (
+                        <div className="notebook-sources-badge-list">
+                            <span className="sources-count-label">📑 {sources.length} Source{sources.length > 1 ? 's' : ''}:</span>
+                            {sources.map((src, i) => (
+                                <span key={i} className="notebook-source-chip" title={src.name}>
+                                    {src.type === 'note' ? '📝' : src.type === 'website' ? '🌐' : '📄'} {src.name}
+                                </span>
+                            ))}
+                        </div>
+                    )}
                 </div>
                 <button
                     type="button"

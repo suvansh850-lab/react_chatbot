@@ -12,5 +12,6 @@ router.put("/conversations/:id", chatController.renameConversation);
 router.delete("/conversations/:id", chatController.deleteConversation);
 router.post("/conversations/:id/upload-file", upload.single("file"), chatController.uploadFile);
 router.get("/conversations/:id/files", chatController.getConversationFiles);
+router.post("/parse-website", chatController.parseWebsite);
 
 module.exports = router;

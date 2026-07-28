@@ -213,6 +213,51 @@ async function getConversationFiles(req, res) {
   }
 }
 
+async function parseWebsite(req, res) {
+  const { url } = req.body;
+  if (!url) {
+    return res.status(400).json({ success: false, error: "URL is required" });
+  }
+
+  try {
+    const fetchResponse = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      }
+    });
+
+    if (!fetchResponse.ok) {
+      throw new Error(`HTTP Error ${fetchResponse.status}`);
+    }
+
+    const html = await fetchResponse.text();
+
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    const title = titleMatch ? titleMatch[1].trim() : url;
+
+    const cleanText = html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .substring(0, 15000);
+
+    return res.json({
+      success: true,
+      url,
+      title,
+      text: cleanText
+    });
+  } catch (err) {
+    console.error("Website parsing error:", err.message);
+    return res.status(500).json({
+      success: false,
+      error: `Failed to fetch website: ${err.message}`
+    });
+  }
+}
+
 module.exports = {
   handleChat,
   getConversations,
@@ -220,5 +265,6 @@ module.exports = {
   renameConversation,
   deleteConversation,
   uploadFile,
-  getConversationFiles
+  getConversationFiles,
+  parseWebsite
 };

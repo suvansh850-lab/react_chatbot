@@ -197,6 +197,22 @@ const Chatbot = () => {
     }
   };
 
+  const addSourceToNotebook = (notebookId, sourceObj) => {
+    setNotebooks(prev => prev.map(nb => {
+      if (nb.id !== notebookId) return nb;
+      const currentSources = nb.sources || [];
+      return { ...nb, sources: [...currentSources, sourceObj] };
+    }));
+  };
+
+  const removeSourceFromNotebook = (notebookId, index) => {
+    setNotebooks(prev => prev.map(nb => {
+      if (nb.id !== notebookId) return nb;
+      const currentSources = nb.sources || [];
+      return { ...nb, sources: currentSources.filter((_, i) => i !== index) };
+    }));
+  };
+
   // Load conversations from database on mount
   useEffect(() => {
     if (!user?.id) return;
@@ -438,6 +454,25 @@ const Chatbot = () => {
       }));
     };
 
+    const targetChatObj = chats.find(c => c.id === targetId);
+    const targetNbId = targetChatObj?.notebookId || activeNotebookId;
+    const targetNotebook = notebooks.find(n => n.id === targetNbId);
+
+    let notebookContextText = "";
+    if (targetNotebook && targetNotebook.sources && targetNotebook.sources.length > 0) {
+      const sourceList = targetNotebook.sources.map((src, i) => {
+        if (src.type === 'note') {
+          return `[Source ${i + 1} - Note: "${src.name}"]\n${src.content}`;
+        } else if (src.type === 'website') {
+          return `[Source ${i + 1} - Website: "${src.name}"]\nURL: ${src.name}`;
+        } else {
+          return `[Source ${i + 1} - File: "${src.name}"]`;
+        }
+      }).join("\n\n");
+
+      notebookContextText = `\n\nATTACHED NOTEBOOK SOURCES:\nYou have access to the following user-provided sources in this notebook workspace ("${targetNotebook.title}"). Always prioritize using information from these sources to answer the user's questions accurately:\n\n${sourceList}`;
+    }
+
     const systemMessage = history.find(m => m.hideInChat);
     const conversationHistory = history.filter(m => !m.hideInChat);
     const messages = [];
@@ -445,7 +480,12 @@ const Chatbot = () => {
     if (systemMessage) {
       messages.push({
         role: "system",
-        content: `You are a helpful AI assistant. You can answer questions about the company Dr. Morepen, and also assist the user with any files they have uploaded in this conversation.\n\nCompany Information:\n${systemMessage.text}`
+        content: `You are a helpful AI assistant. You can answer questions about the company Dr. Morepen, and also assist the user with any files or sources added in this conversation.\n\nCompany Information:\n${systemMessage.text}${notebookContextText}`
+      });
+    } else if (notebookContextText) {
+      messages.push({
+        role: "system",
+        content: `You are a helpful AI assistant.${notebookContextText}`
       });
     }
 
@@ -649,6 +689,8 @@ const Chatbot = () => {
             setSelectedModel={setSelectedModel}
             isUploading={isUploading}
             setIsVoiceOpen={setIsVoiceOpen}
+            onAddSource={(srcObj) => addSourceToNotebook(activeNotebookId, srcObj)}
+            onDeleteSource={(idx) => removeSourceFromNotebook(activeNotebookId, idx)}
           />
         ) : (
           <>
