@@ -47,7 +47,8 @@ const NotebookView = ({
         if (file.type.startsWith('text/') || file.name.endsWith('.txt') || file.name.endsWith('.csv') || file.name.endsWith('.json') || file.name.endsWith('.md')) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                const textContent = e.target.result;
+                let textContent = e.target.result || "";
+                textContent = textContent.replace(/\0/g, "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, "");
                 if (onAddSource) {
                     onAddSource({ id: Date.now(), name: file.name, type: 'file', content: textContent });
                 }
