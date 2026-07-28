@@ -37,7 +37,15 @@ const SourcesModal = ({
     };
 
     const handleLaunchDrive = () => {
-        window.open('https://drive.google.com', '_blank');
+        const width = 850;
+        const height = 650;
+        const left = Math.max(0, (window.screen.width - width) / 2);
+        const top = Math.max(0, (window.screen.height - height) / 2);
+        window.open(
+            'https://drive.google.com',
+            'GoogleDrivePopup',
+            `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`
+        );
     };
 
     const handleAddTextSubmit = (e) => {
