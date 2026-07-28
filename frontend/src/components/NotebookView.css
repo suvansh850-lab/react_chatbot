@@ -3,11 +3,11 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #141416;
-  color: #f4f4f5;
-  padding: 40px 60px;
+  background: #f8f9fa;
+  color: #2c2c2c;
+  padding: 32px 48px;
   overflow-y: auto;
-  min-height: 100vh;
+  height: calc(100vh - 70px);
   box-sizing: border-box;
 }
 
@@ -22,73 +22,76 @@
 .notebook-title-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .notebook-emoji-icon {
-  font-size: 32px;
+  font-size: 34px;
   user-select: none;
 }
 
 .notebook-title-input {
-  font-size: 2rem;
-  font-weight: 500;
-  color: #ffffff;
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #2c2c2c;
   background: transparent;
   border: none;
   outline: none;
   font-family: inherit;
   width: 100%;
   max-width: 600px;
+  transition: border-color 0.2s ease;
 }
 
 .notebook-title-input:focus {
-  border-bottom: 1px solid #3f3f46;
+  border-bottom: 2px solid #6D4FC2;
 }
 
 .add-sources-btn {
-  background: #27272a;
-  color: #e4e4e7;
-  border: 1px solid #3f3f46;
+  background: #6D4FC2;
+  color: #ffffff;
+  border: none;
   border-radius: 20px;
-  padding: 8px 18px;
+  padding: 9px 20px;
   font-size: 0.88rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 6px;
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(109, 79, 194, 0.25);
 }
 
 .add-sources-btn:hover {
-  background: #3f3f46;
-  color: #ffffff;
+  background: #593bab;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(109, 79, 194, 0.35);
 }
 
 /* Prompt Bar */
 .notebook-prompt-bar {
   display: flex;
   align-items: center;
-  background: #232326;
-  border: 1px solid #343438;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
   border-radius: 28px;
   padding: 6px 16px;
-  margin-bottom: 48px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  margin-bottom: 44px;
+  box-shadow: 0 4px 20px rgba(109, 79, 194, 0.08);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .notebook-prompt-bar:focus-within {
-  border-color: #52525b;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  border-color: #6D4FC2;
+  box-shadow: 0 0 0 3px rgba(109, 79, 194, 0.15);
 }
 
 .notebook-prompt-bar .attach-icon-btn {
   background: none;
   border: none;
-  color: #a1a1aa;
+  color: #666;
   font-size: 22px;
   cursor: pointer;
   padding: 6px;
@@ -100,8 +103,8 @@
 }
 
 .notebook-prompt-bar .attach-icon-btn:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.08);
+  color: #6D4FC2;
+  background: rgba(109, 79, 194, 0.08);
 }
 
 .notebook-prompt-input {
@@ -109,14 +112,14 @@
   background: transparent;
   border: none;
   outline: none;
-  color: #ffffff;
+  color: #2c2c2c;
   font-size: 0.98rem;
   padding: 8px 12px;
   font-family: inherit;
 }
 
 .notebook-prompt-input::placeholder {
-  color: #a1a1aa;
+  color: #888888;
 }
 
 .notebook-prompt-bar .green-status-dot {
@@ -126,49 +129,68 @@
   border-radius: 50%;
   margin-right: 12px;
   flex-shrink: 0;
-  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
 }
 
 /* Past Chats Section */
 .past-chats-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-width: 800px;
+  gap: 10px;
+  max-width: 850px;
 }
 
 .past-chats-title {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #a1a1aa;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #7B5FD4;
   margin-bottom: 6px;
-  letter-spacing: 0.01em;
 }
 
 .past-chat-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
-  background: transparent;
+  padding: 14px 20px;
+  background: #ffffff;
+  border: 1px solid #ececf1;
   border-radius: 12px;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .past-chat-row:hover {
-  background: #232326;
+  background: #f6f2ff;
+  border-color: #d6c7ff;
+  transform: translateX(2px);
 }
 
 .past-chat-name {
   font-size: 0.95rem;
   font-weight: 500;
-  color: #f4f4f5;
+  color: #2c2c2c;
+}
+
+.past-chat-row:hover .past-chat-name {
+  color: #6D4FC2;
 }
 
 .past-chat-date {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: #88888e;
+}
+
+.empty-past-chats {
+  color: #88888e;
+  font-size: 0.9rem;
+  font-style: italic;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px dashed #e0e0e0;
+  border-radius: 12px;
 }
 
 /* Responsive adjustments */
@@ -178,6 +200,6 @@
   }
 
   .notebook-title-input {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
   }
 }

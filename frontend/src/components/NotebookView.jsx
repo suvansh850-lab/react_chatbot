@@ -108,23 +108,21 @@ const NotebookView = ({
                     <button
                         type="button"
                         className="model-pill-btn"
-                        style={{ color: '#e4e4e7' }}
                         onClick={() => setModelOpen(o => !o)}
                     >
                         <span>{currentModelLabel}</span>
-                        <span className="material-symbols-outlined model-pill-arrow" style={{ color: '#a1a1aa' }}>
+                        <span className="material-symbols-outlined model-pill-arrow">
                             {modelOpen ? 'expand_less' : 'expand_more'}
                         </span>
                     </button>
 
                     {modelOpen && (
-                        <div className="model-dropdown" style={{ background: '#27272a', borderColor: '#3f3f46' }}>
+                        <div className="model-dropdown">
                             {MODELS.map(m => (
                                 <button
                                     key={m.value}
                                     type="button"
                                     className={`model-dropdown-item ${selectedModel === m.value ? 'active' : ''}`}
-                                    style={{ color: '#f4f4f5' }}
                                     onClick={() => { setSelectedModel(m.value); setModelOpen(false); }}
                                 >
                                     {m.label}
@@ -153,7 +151,7 @@ const NotebookView = ({
                 <h3 className="past-chats-title">Past chats</h3>
 
                 {notebookChats.length === 0 ? (
-                    <div style={{ color: '#71717a', fontSize: '0.9rem', fontStyle: 'italic', padding: '12px 0' }}>
+                    <div className="empty-past-chats">
                         No past chats in this notebook yet. Start by asking a question above!
                     </div>
                 ) : (

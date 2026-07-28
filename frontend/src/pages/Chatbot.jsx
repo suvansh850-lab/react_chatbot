@@ -44,12 +44,30 @@ const Chatbot = () => {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
     const initialChatId = Date.now().toString();
-    return [{
-      id: initialChatId,
-      title: "New Chat",
-      history: [{ hideInChat: true, role: "model", text: CompanyInfo }],
-      loaded: true
-    }];
+    return [
+      {
+        id: initialChatId,
+        title: "How Can I Help?",
+        notebookId: "nb_1",
+        history: [
+          { hideInChat: true, role: "model", text: CompanyInfo },
+          { role: "user", text: "How Can I Help?" },
+          { role: "model", text: "Hello! I am your Morepen Analyst Chatbot. How can I assist you today?" }
+        ],
+        loaded: true
+      },
+      {
+        id: (Date.now() - 1000).toString(),
+        title: "Incomplete Message Received",
+        notebookId: "nb_1",
+        history: [
+          { hideInChat: true, role: "model", text: CompanyInfo },
+          { role: "user", text: "Incomplete Message Received" },
+          { role: "model", text: "If a message is incomplete, please let me know and I will re-send the full answer." }
+        ],
+        loaded: true
+      }
+    ];
   });
 
   const [activeChatId, setActiveChatId] = useState(() => chats[0]?.id || null);
@@ -135,14 +153,35 @@ const Chatbot = () => {
 
   const handleNotebookPromptSend = (promptText) => {
     setViewMode('chat');
+    
+    let targetChatId = activeChatId;
+    let targetChat = chats.find(c => c.id === targetChatId);
+
+    if (!targetChat || (activeNotebookId && targetChat.notebookId !== activeNotebookId)) {
+      targetChatId = Date.now().toString();
+      const title = promptText.length > 25 ? promptText.substring(0, 25) + "..." : promptText;
+      targetChat = {
+        id: targetChatId,
+        title: title,
+        notebookId: activeNotebookId,
+        history: [{ hideInChat: true, role: "model", text: CompanyInfo }],
+        loaded: true
+      };
+      setChats(prev => [targetChat, ...prev]);
+      setActiveChatId(targetChatId);
+    }
+
     const userMsg = { role: "user", text: promptText };
+    const updatedHistory = [...(targetChat ? targetChat.history : []), userMsg];
+
     setChats(prev => prev.map(c => {
-      if (c.id === activeChatId) {
-        return { ...c, history: [...c.history, userMsg] };
+      if (c.id === targetChatId) {
+        return { ...c, history: updatedHistory };
       }
       return c;
     }));
-    generateBotResponse([...chatHistory, userMsg]);
+
+    generateBotResponse(updatedHistory, targetChatId);
   };
 
   const renameNotebook = (notebookId, newTitle) => {
@@ -378,11 +417,25 @@ const Chatbot = () => {
     }));
   };
 
-  const generateBotResponse = async (history) => {
-    setChatHistory(prev => [...prev, { role: "model", text: "Thinking..." }]);
+  const generateBotResponse = async (history, targetChatId) => {
+    const targetId = targetChatId || activeChatId;
+
+    setChats(prev => prev.map(c => {
+      if (c.id !== targetId) return c;
+      return { ...c, history: [...c.history, { role: "model", text: "Thinking..." }] };
+    }));
 
     const updateHistory = (text) => {
-      setChatHistory(prev => [...prev.filter(m => m.text !== "Thinking..."), { role: "model", text }]);
+      setChats(prev => prev.map(c => {
+        if (c.id !== targetId) return c;
+        let title = c.title;
+        const newHist = [...c.history.filter(m => m.text !== "Thinking..."), { role: "model", text }];
+        if (title === "New Chat" || title === "Untitled notebook") {
+          const firstUser = newHist.find(m => m.role === "user");
+          if (firstUser) title = firstUser.text.length > 25 ? firstUser.text.substring(0, 25) + "..." : firstUser.text;
+        }
+        return { ...c, title, history: newHist };
+      }));
     };
 
     const systemMessage = history.find(m => m.hideInChat);
@@ -400,8 +453,9 @@ const Chatbot = () => {
       messages.push({ role: role === "model" ? "assistant" : "user", content: text });
     });
 
-    let chatTitle = activeChat ? activeChat.title : "New Chat";
-    if (chatTitle === "New Chat") {
+    const currentChatObj = chats.find(c => c.id === targetId);
+    let chatTitle = currentChatObj ? currentChatObj.title : "New Chat";
+    if (chatTitle === "New Chat" || chatTitle === "Untitled notebook") {
       const userMsg = history.find(m => m.role === "user");
       if (userMsg) chatTitle = userMsg.text.length > 25 ? userMsg.text.substring(0, 25) + "..." : userMsg.text;
     }
@@ -411,7 +465,7 @@ const Chatbot = () => {
       const res = await fetch(backendUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversationId: activeChatId, title: chatTitle, messages, userId: user?.id, model: selectedModel })
+        body: JSON.stringify({ conversationId: targetId, title: chatTitle, messages, userId: user?.id, model: selectedModel })
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || "Failed to generate bot response.");
@@ -547,78 +601,81 @@ const Chatbot = () => {
         deleteChat={deleteChat}
       />
 
-      {viewMode === 'notebook' && activeNotebook ? (
-        <NotebookView
-          notebook={activeNotebook}
-          onRenameNotebook={renameNotebook}
-          onFileUpload={handleFileUpload}
-          chats={chats}
-          onSelectChat={(chatId) => {
-            loadChat(chatId);
-            setViewMode('chat');
-          }}
-          onSendPrompt={handleNotebookPromptSend}
-          selectedModel={selectedModel}
-          setSelectedModel={setSelectedModel}
-          isUploading={isUploading}
-          setIsVoiceOpen={setIsVoiceOpen}
-        />
-      ) : (
-        <div className="chatbot-popup">
-          {/* Header */}
-          <div className="chat-header">
-            <div className="header-info">
-              <button
-                className="menu-toggle-btn material-symbols-outlined"
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              >
-                menu
-              </button>
-              <ChatBotIcon />
-              <h2 className="logo-text">Morepen Analyst Chatbot</h2>
-            </div>
-            <div className="header-actions">
-              {/* Voice button */}
-              <button
-                className="voice-assist-btn"
-                onClick={() => setIsVoiceOpen(true)}
-                title="Start voice assistant"
-              >
-                <span className="material-symbols-outlined">graphic_eq</span>
-              </button>
-              <button
-                className="share-chat-btn material-symbols-outlined"
-                onClick={shareCurrentChat}
-                title="Share chat"
-              >
-                share
-              </button>
-            </div>
+      <div className="chatbot-popup">
+        {/* Header */}
+        <div className="chat-header">
+          <div className="header-info">
+            <button
+              className="menu-toggle-btn material-symbols-outlined"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            >
+              menu
+            </button>
+            <ChatBotIcon />
+            <h2 className="logo-text">Morepen Analyst Chatbot</h2>
           </div>
-
-          {/* Chat body */}
-          <div ref={chatBodyRef} className="chat-body">
-            <ChatMessage chat={{ role: "model", text: "Hello! I am your Morepen Analyst Chatbot. How can I assist you today?" }} />
-            {chatHistory.map((chat, index) => (
-              <ChatMessage key={index} chat={chat} />
-            ))}
-          </div>
-
-          {/* Footer */}
-          <div className="chat-footer">
-            <ChatForm
-              chatHistory={chatHistory}
-              setChatHistory={setChatHistory}
-              generateBotResponse={generateBotResponse}
-              onFileUpload={handleFileUpload}
-              attachedFiles={attachedFiles}
-              isUploading={isUploading}
-              selectedModel={selectedModel}
-              setSelectedModel={setSelectedModel}
-            />
+          <div className="header-actions">
+            {/* Voice button */}
+            <button
+              className="voice-assist-btn"
+              onClick={() => setIsVoiceOpen(true)}
+              title="Start voice assistant"
+            >
+              <span className="material-symbols-outlined">graphic_eq</span>
+            </button>
+            <button
+              className="share-chat-btn material-symbols-outlined"
+              onClick={shareCurrentChat}
+              title="Share chat"
+            >
+              share
+            </button>
           </div>
         </div>
-      )}
+
+        {/* Body View */}
+        {viewMode === 'notebook' && activeNotebook ? (
+          <NotebookView
+            notebook={activeNotebook}
+            onRenameNotebook={renameNotebook}
+            onFileUpload={handleFileUpload}
+            chats={chats}
+            onSelectChat={(chatId) => {
+              loadChat(chatId);
+              setViewMode('chat');
+            }}
+            onSendPrompt={handleNotebookPromptSend}
+            selectedModel={selectedModel}
+            setSelectedModel={setSelectedModel}
+            isUploading={isUploading}
+            setIsVoiceOpen={setIsVoiceOpen}
+          />
+        ) : (
+          <>
+            {/* Chat body */}
+            <div ref={chatBodyRef} className="chat-body">
+              <ChatMessage chat={{ role: "model", text: "Hello! I am your Morepen Analyst Chatbot. How can I assist you today?" }} />
+              {chatHistory.map((chat, index) => (
+                <ChatMessage key={index} chat={chat} />
+              ))}
+            </div>
+
+            {/* Footer */}
+            <div className="chat-footer">
+              <ChatForm
+                chatHistory={chatHistory}
+                setChatHistory={setChatHistory}
+                generateBotResponse={generateBotResponse}
+                onFileUpload={handleFileUpload}
+                attachedFiles={attachedFiles}
+                isUploading={isUploading}
+                selectedModel={selectedModel}
+                setSelectedModel={setSelectedModel}
+              />
+            </div>
+          </>
+        )}
+      </div>
     </div>
 
     {/* Voice Assistant Modal */}
