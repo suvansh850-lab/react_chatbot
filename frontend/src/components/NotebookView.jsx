@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import SourcesModal from './SourcesModal';
 import './NotebookView.css';
 
 const NotebookView = ({
@@ -13,9 +14,10 @@ const NotebookView = ({
     isUploading = false,
     setIsVoiceOpen
 }) => {
-    const fileInputRef = useRef();
     const inputRef = useRef();
     const [modelOpen, setModelOpen] = useState(false);
+    const [isSourcesModalOpen, setIsSourcesModalOpen] = useState(false);
+    const [notebookSources, setNotebookSources] = useState([]);
 
     const MODELS = [
         { label: 'Groq', value: 'groq/llama-3.3-70b-versatile' },
@@ -34,12 +36,23 @@ const NotebookView = ({
         }
     };
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file && onFileUpload) {
+    const handleSourceFileUpload = (file) => {
+        if (onFileUpload) {
             onFileUpload(file);
         }
-        e.target.value = "";
+        setNotebookSources(prev => [...prev, { name: file.name, type: 'file' }]);
+    };
+
+    const handleAddWebsite = (url) => {
+        setNotebookSources(prev => [...prev, { name: url, type: 'website' }]);
+    };
+
+    const handleAddTextNote = (title, text) => {
+        setNotebookSources(prev => [...prev, { name: title, type: 'note', content: text }]);
+    };
+
+    const handleDeleteSource = (index) => {
+        setNotebookSources(prev => prev.filter((_, i) => i !== index));
     };
 
     // Get chats that belong to this notebook
@@ -47,19 +60,21 @@ const NotebookView = ({
 
     return (
         <div className="notebook-view-container">
-            <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                style={{ display: 'none' }}
-                accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.md,.json"
-                disabled={isUploading}
+            {/* Sources Modal */}
+            <SourcesModal
+                isOpen={isSourcesModalOpen}
+                onClose={() => setIsSourcesModalOpen(false)}
+                onFileUpload={handleSourceFileUpload}
+                isUploading={isUploading}
+                sources={notebookSources}
+                onAddWebsite={handleAddWebsite}
+                onAddTextNote={handleAddTextNote}
+                onDeleteSource={handleDeleteSource}
             />
 
             {/* Top header row */}
             <div className="notebook-header-row">
                 <div className="notebook-title-section">
-                    <span className="notebook-emoji-icon">📓</span>
                     <input
                         type="text"
                         className="notebook-title-input"
@@ -71,7 +86,7 @@ const NotebookView = ({
                 <button
                     type="button"
                     className="add-sources-btn"
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => setIsSourcesModalOpen(true)}
                     disabled={isUploading}
                 >
                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
@@ -86,7 +101,7 @@ const NotebookView = ({
                 <button
                     type="button"
                     className="attach-icon-btn material-symbols-outlined"
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => setIsSourcesModalOpen(true)}
                     title="Add sources"
                     disabled={isUploading}
                 >

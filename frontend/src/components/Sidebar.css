@@ -121,26 +121,7 @@
   white-space: nowrap;
 }
 
-.new-chat-icon-btn {
-  background: none;
-  border: none;
-  color: #7B5FD4;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease;
-}
 
-.new-chat-icon-btn:hover {
-  background: rgba(109, 79, 194, 0.1);
-}
-
-.new-chat-icon-btn .material-symbols-outlined {
-  font-size: 18px;
-}
 
 .new-notebook-btn {
   width: 100%;

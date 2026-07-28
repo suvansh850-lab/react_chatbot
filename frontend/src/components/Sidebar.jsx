@@ -139,12 +139,12 @@ const Sidebar = ({
 
         {/* ── Recent Chats Section (Non-Notebook standalone chats only) ── */}
         <div className="sidebar-section history-section">
-          <div className="section-header-row">
-            <div className="section-header-title">Recent</div>
-            <button className="new-chat-icon-btn" onClick={startNewChat} title="New chat">
-              <span className="material-symbols-outlined">add</span>
-            </button>
-          </div>
+          <div className="section-header-title">Recent</div>
+
+          <button className="new-notebook-btn" onClick={startNewChat}>
+            <span className="material-symbols-outlined icon">add</span>
+            <span>New chat</span>
+          </button>
 
           {(() => {
             const standaloneChats = chatList.filter(c => !c.notebookId);
