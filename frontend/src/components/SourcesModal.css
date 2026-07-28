@@ -282,6 +282,23 @@
   border-color: #6D4FC2;
 }
 
+.drive-creds-form {
+  display: flex;
+  flex-direction: column;
+  background: #f8f9fa;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  margin-top: 8px;
+}
+
+.drive-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #444444;
+  margin-bottom: 4px;
+}
+
 .source-form-actions {
   display: flex;
   justify-content: flex-end;

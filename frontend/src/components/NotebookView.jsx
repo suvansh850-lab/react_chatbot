@@ -44,8 +44,20 @@ const NotebookView = ({
         if (onFileUpload) {
             onFileUpload(file);
         }
-        if (onAddSource) {
-            onAddSource({ id: Date.now(), name: file.name, type: 'file' });
+
+        if (file.type.startsWith('text/') || file.name.endsWith('.txt') || file.name.endsWith('.csv') || file.name.endsWith('.json') || file.name.endsWith('.md')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const textContent = e.target.result;
+                if (onAddSource) {
+                    onAddSource({ id: Date.now(), name: file.name, type: 'file', content: textContent });
+                }
+            };
+            reader.readAsText(file);
+        } else {
+            if (onAddSource) {
+                onAddSource({ id: Date.now(), name: file.name, type: 'file', content: `Uploaded document: ${file.name}` });
+            }
         }
     };
 

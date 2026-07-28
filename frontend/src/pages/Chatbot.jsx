@@ -384,6 +384,15 @@ const Chatbot = () => {
       if (res.ok && data.success) {
         setAttachedFiles(prev => [...prev, data.fileName]);
         
+        if (activeNotebookId) {
+          addSourceToNotebook(activeNotebookId, {
+            id: Date.now(),
+            name: file.name,
+            type: 'file',
+            content: data.parsedText || `File name: ${file.name}`
+          });
+        }
+
         const userFileMsg = {
           role: "user",
           text: `Uploaded file: ${file.name}`,
@@ -461,12 +470,13 @@ const Chatbot = () => {
     let notebookContextText = "";
     if (targetNotebook && targetNotebook.sources && targetNotebook.sources.length > 0) {
       const sourceList = targetNotebook.sources.map((src, i) => {
+        const textContent = src.content || src.text || "";
         if (src.type === 'note') {
-          return `[Source ${i + 1} - Note: "${src.name}"]\n${src.content}`;
+          return `[Source ${i + 1} - Note: "${src.name}"]\n${textContent}`;
         } else if (src.type === 'website') {
-          return `[Source ${i + 1} - Website: "${src.name}"]\nURL: ${src.name}`;
+          return `[Source ${i + 1} - Website: "${src.name}"]\nURL: ${src.url || src.name}\n${textContent}`;
         } else {
-          return `[Source ${i + 1} - File: "${src.name}"]`;
+          return `[Source ${i + 1} - File: "${src.name}"]\n${textContent}`;
         }
       }).join("\n\n");
 

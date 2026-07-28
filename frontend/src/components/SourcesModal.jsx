@@ -19,6 +19,11 @@ const SourcesModal = ({
     const [textTitle, setTextTitle] = useState('');
     const [driveUrl, setDriveUrl] = useState('');
 
+    // Google Drive API Credentials State
+    const [googleClientId, setGoogleClientId] = useState(() => localStorage.getItem('google_client_id') || '');
+    const [googleApiKey, setGoogleApiKey] = useState(() => localStorage.getItem('google_api_key') || '');
+    const [savedMsg, setSavedMsg] = useState('');
+
     if (!isOpen) return null;
 
     const handleFileSelect = (e) => {
@@ -31,8 +36,23 @@ const SourcesModal = ({
 
     const handleDriveOptionClick = () => {
         setActiveView('drive');
-        // Open Google Drive in new tab
-        window.open('https://drive.google.com', '_blank');
+    };
+
+    const handleSaveGoogleCredentials = (e) => {
+        e.preventDefault();
+        localStorage.setItem('google_client_id', googleClientId.trim());
+        localStorage.setItem('google_api_key', googleApiKey.trim());
+        setSavedMsg('Credentials saved successfully!');
+        setTimeout(() => setSavedMsg(''), 3000);
+    };
+
+    const handleLaunchDrivePicker = () => {
+        if (!googleClientId.trim() || !googleApiKey.trim()) {
+            alert("Please enter and save your Google Client ID and API Key below first.");
+            return;
+        }
+        // Launch Google Picker API or open Google Drive window
+        window.open(`https://drive.google.com`, '_blank');
     };
 
     const handleAddWebsiteSubmit = async (e) => {
@@ -179,31 +199,64 @@ const SourcesModal = ({
                                 </div>
                             </form>
                         ) : activeView === 'drive' ? (
-                            <form className="source-form-view" onSubmit={handleAddDriveSubmit}>
-                                <h3>Google Drive Opened in New Tab ↗</h3>
-                                <p>Select your file in Google Drive, or paste the shareable Google Drive link below:</p>
-                                <input
-                                    type="url"
-                                    className="source-input"
-                                    placeholder="https://drive.google.com/file/d/..."
-                                    value={driveUrl}
-                                    onChange={(e) => setDriveUrl(e.target.value)}
-                                    required
-                                    autoFocus
-                                />
-                                <div className="source-form-actions">
-                                    <button
-                                        type="button"
-                                        className="cancel-btn"
-                                        onClick={() => window.open('https://drive.google.com', '_blank')}
-                                        style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-                                    >
-                                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>open_in_new</span>
-                                        Open Drive
-                                    </button>
-                                    <button type="submit" className="submit-btn">Add Drive Link</button>
-                                </div>
-                            </form>
+                            <div className="source-form-view">
+                                <h3>Google Drive Integration</h3>
+                                <p>Enter your Google Cloud credentials (Client ID & Secret Key) to connect Google Drive:</p>
+
+                                <form onSubmit={handleSaveGoogleCredentials} className="drive-creds-form">
+                                    <label className="drive-label">Google Client ID:</label>
+                                    <input
+                                        type="text"
+                                        className="source-input"
+                                        placeholder="YOUR_CLIENT_ID.apps.googleusercontent.com"
+                                        value={googleClientId}
+                                        onChange={(e) => setGoogleClientId(e.target.value)}
+                                    />
+
+                                    <label className="drive-label" style={{ marginTop: '8px' }}>Google API Key / Secret Key:</label>
+                                    <input
+                                        type="password"
+                                        className="source-input"
+                                        placeholder="AIzaSy..."
+                                        value={googleApiKey}
+                                        onChange={(e) => setGoogleApiKey(e.target.value)}
+                                    />
+
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '12px' }}>
+                                        <button type="submit" className="submit-btn" style={{ padding: '6px 14px' }}>
+                                            Save Credentials
+                                        </button>
+                                        {savedMsg && <span style={{ color: '#16a34a', fontSize: '0.85rem', fontWeight: '600' }}>{savedMsg}</span>}
+                                    </div>
+                                </form>
+
+                                <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '16px 0' }} />
+
+                                <form onSubmit={handleAddDriveSubmit} className="drive-picker-section">
+                                    <p style={{ fontWeight: '500', color: '#2c2c2c' }}>Or paste a Google Drive file link directly:</p>
+                                    <input
+                                        type="url"
+                                        className="source-input"
+                                        placeholder="https://drive.google.com/file/d/..."
+                                        value={driveUrl}
+                                        onChange={(e) => setDriveUrl(e.target.value)}
+                                        required
+                                    />
+
+                                    <div className="source-form-actions">
+                                        <button
+                                            type="button"
+                                            className="cancel-btn"
+                                            onClick={handleLaunchDrivePicker}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#f4f0ff', color: '#6D4FC2', border: '1px solid #d6c7ff' }}
+                                        >
+                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>open_in_new</span>
+                                            Launch Drive
+                                        </button>
+                                        <button type="submit" className="submit-btn">Add Drive Link</button>
+                                    </div>
+                                </form>
+                            </div>
                         ) : (
                             /* Main Sources List / Empty State */
                             <div className="sources-list-container">

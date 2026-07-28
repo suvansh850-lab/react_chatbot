@@ -182,7 +182,8 @@ async function uploadFile(req, res) {
       success: true,
       message: `File '${file.originalname}' uploaded and parsed successfully.`,
       fileId: result.rows[0].id,
-      fileName: file.originalname
+      fileName: file.originalname,
+      parsedText: fileContent
     });
   } catch (error) {
     console.error("File upload and parsing error:", error.message);
