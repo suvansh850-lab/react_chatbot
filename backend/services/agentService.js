@@ -84,23 +84,25 @@ const fileMathTool = tool(
     }
     
     try {
-      const dbResult = await db.query(
-        "SELECT file_name, file_content FROM conversation_files WHERE conversation_id = $1",
-        [conversationId]
-      );
-      if (dbResult.rows.length === 0) {
-        return "Error: No files found for this conversation. Please upload a file first.";
+      let csvContent = "";
+      try {
+        const dbResult = await db.query(
+          "SELECT file_name, file_content FROM conversation_files WHERE conversation_id = $1",
+          [conversationId]
+        );
+        if (dbResult && dbResult.rows.length > 0) {
+          const file = fileName 
+            ? dbResult.rows.find(r => r.file_name.toLowerCase() === fileName.toLowerCase())
+            : dbResult.rows[0];
+          if (file) csvContent = file.file_content || "";
+        }
+      } catch (dbErr) {
+        console.error("DB query error in fileMathTool:", dbErr.message);
       }
-      
-      const file = fileName 
-        ? dbResult.rows.find(r => r.file_name.toLowerCase() === fileName.toLowerCase())
-        : dbResult.rows[0]; // default to first file
-        
-      if (!file) {
-        return `Error: File '${fileName}' not found. Available files: ${dbResult.rows.map(r => r.file_name).join(", ")}`;
+
+      if (!csvContent) {
+        return "Note: File content is already provided directly in your prompt context. Please perform the calculation using the file text in your context.";
       }
-      
-      let csvContent = file.file_content || "";
       
       if (sheetName) {
         const sheetMarker = `--- Sheet: ${sheetName} ---`;
@@ -289,21 +291,12 @@ async function runAgent(messages, conversationId, selectedModel = "groq/llama-3.
     // 1. Map raw message formats into LangChain instances
     const langchainMessages = messages.map((msg) => {
       if (msg.role === "system") {
-        // Intercept and swap bulky company data with optimized agent instructions
-        if (msg.content && msg.content.includes("Company Information:")) {
-          return new SystemMessage(
-            `You are a helpful, general-purpose AI assistant.
-You can answer any questions, write code, analyze data, and assist the user.
-You have access to a tool called 'get_morepen_company_info' to retrieve company details when asked about Morepen's products, history, divisions, or strategy.
-Use the 'get_current_datetime' tool if the user asks about dates or times relative to 'today'.
-You also have access to a tool called 'calculate_file_column' to compute exact mathematical totals (sum, average, min, max, count) on specific columns of uploaded CSV/Excel files. Whenever the user asks you to calculate sums, averages, or totals on file data, you MUST use the 'calculate_file_column' tool to get the exact values instead of guessing or performing mental math.
-
-IMPORTANT: The user has uploaded files to this conversation. The full parsed text contents of these files are loaded directly into your prompt context below. You MUST read the file data below, perform any calculations or analyses requested by the user, and answer their questions directly using this data. Do not say you cannot access it, as the data is already provided to you.
-
-${fileContext}`
-          );
+        let systemPromptText = msg.content || "";
+        // Preserve client-provided sources and append database file context if available
+        if (fileContext && !systemPromptText.includes("Uploaded Files in this conversation:")) {
+          systemPromptText += `\n\n${fileContext}`;
         }
-        return new SystemMessage(msg.content);
+        return new SystemMessage(systemPromptText);
       } else if (msg.role === "assistant" || msg.role === "model") {
         return new AIMessage(msg.content);
       } else {
