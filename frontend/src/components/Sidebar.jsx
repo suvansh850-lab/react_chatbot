@@ -137,7 +137,7 @@ const Sidebar = ({
           </div>
         </div>
 
-        {/* ── Recent Chats Section ── */}
+        {/* ── Recent Chats Section (Non-Notebook standalone chats only) ── */}
         <div className="sidebar-section history-section">
           <div className="section-header-row">
             <div className="section-header-title">Recent</div>
@@ -146,13 +146,14 @@ const Sidebar = ({
             </button>
           </div>
 
-          {chatList.length === 0 ? (
-            <p className="empty-section-text">No chats yet</p>
-          ) : (
-            chatList.map((chat, idx) => {
+          {(() => {
+            const standaloneChats = chatList.filter(c => !c.notebookId);
+            if (standaloneChats.length === 0) {
+              return <p className="empty-section-text">No standalone chats yet</p>;
+            }
+            return standaloneChats.map((chat) => {
               const isEditing = chat.id === editingChatId;
               const isActive = chat.id === activeChatId && !activeNotebookId;
-              const showBlueDot = idx < 3; // Recent active indicator dot
               return (
                 <div
                   key={chat.id}
@@ -178,7 +179,6 @@ const Sidebar = ({
                   ) : (
                     <>
                       <span className="item-title-text">{chat.title}</span>
-                      {showBlueDot && <span className="recent-blue-dot" title="Recent activity" />}
                       <div className="action-buttons">
                         <button
                           className="rename-btn material-symbols-outlined"
@@ -208,8 +208,8 @@ const Sidebar = ({
                   )}
                 </div>
               );
-            })
-          )}
+            });
+          })()}
         </div>
       </div>
 

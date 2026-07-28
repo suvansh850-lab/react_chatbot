@@ -199,15 +199,7 @@
   flex: 1;
 }
 
-.recent-blue-dot {
-  width: 8px;
-  height: 8px;
-  background: #3b82f6;
-  border-radius: 50%;
-  flex-shrink: 0;
-  margin-left: auto;
-  box-shadow: 0 0 4px rgba(59, 130, 246, 0.4);
-}
+
 
 .all-notebooks-btn {
   width: 100%;

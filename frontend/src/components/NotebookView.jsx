@@ -101,8 +101,6 @@ const NotebookView = ({
                     required
                 />
 
-                <span className="green-status-dot" title="Active" />
-
                 {/* Model Selector */}
                 <div className="inline-model-selector" style={{ marginRight: '8px' }}>
                     <button
