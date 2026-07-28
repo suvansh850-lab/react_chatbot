@@ -270,17 +270,19 @@ async function runAgent(messages, conversationId, selectedModel = "groq/llama-3.
     try {
       if (conversationId) {
         const dbResult = await db.query(
-          "SELECT file_name, file_content FROM conversation_files WHERE conversation_id = $1",
+          "SELECT file_name, file_content FROM conversation_files WHERE conversation_id = $1 ORDER BY created_at ASC",
           [conversationId]
         );
         if (dbResult && dbResult.rows.length > 0) {
           fileContext = "\n\nUploaded Files in this conversation:\n" + 
-            dbResult.rows.map(row => {
+            dbResult.rows.map((row, idx) => {
               let content = row.file_content || "";
               if (content.length > 10000) {
                 content = content.substring(0, 10000) + "\n\n[Content truncated to fit context limits...]";
               }
-              return `--- File: ${row.file_name} ---\n${content}`;
+              const isLatest = idx === dbResult.rows.length - 1;
+              const header = isLatest ? `--- ★ LATEST UPLOADED FILE: ${row.file_name} ---` : `--- Previous File: ${row.file_name} ---`;
+              return `${header}\n${content}`;
             }).join("\n\n");
         }
       }

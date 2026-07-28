@@ -476,16 +476,18 @@ const Chatbot = () => {
     if (targetNotebook && targetNotebook.sources && targetNotebook.sources.length > 0) {
       const sourceList = targetNotebook.sources.map((src, i) => {
         const textContent = src.content || src.text || "";
+        const isLatest = i === targetNotebook.sources.length - 1;
+        const tag = isLatest ? "★ LATEST UPLOADED SOURCE" : `Source ${i + 1}`;
         if (src.type === 'note') {
-          return `[Source ${i + 1} - Note: "${src.name}"]\n${textContent}`;
+          return `[${tag} - Note: "${src.name}"]\n${textContent}`;
         } else if (src.type === 'website') {
-          return `[Source ${i + 1} - Website: "${src.name}"]\nURL: ${src.url || src.name}\n${textContent}`;
+          return `[${tag} - Website: "${src.name}"]\nURL: ${src.url || src.name}\n${textContent}`;
         } else {
-          return `[Source ${i + 1} - File: "${src.name}"]\n${textContent}`;
+          return `[${tag} - File: "${src.name}"]\n${textContent}`;
         }
       }).join("\n\n");
 
-      notebookContextText = `\n\nATTACHED NOTEBOOK SOURCES:\nYou have access to the following user-provided sources in this notebook workspace ("${targetNotebook.title}"). Always prioritize using information from these sources to answer the user's questions accurately:\n\n${sourceList}`;
+      notebookContextText = `\n\nATTACHED NOTEBOOK SOURCES:\nYou have access to the following user-provided sources in this notebook workspace ("${targetNotebook.title}"). IMPORTANT: When the user asks about an uploaded file or file content, ALWAYS prioritize and use the LATEST UPLOADED SOURCE ("★ LATEST UPLOADED SOURCE") unless explicitly requested otherwise.\n\n${sourceList}`;
     }
 
     const systemMessage = history.find(m => m.hideInChat);
