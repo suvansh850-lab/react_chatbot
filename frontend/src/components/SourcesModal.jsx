@@ -38,66 +38,15 @@ const SourcesModal = ({
     };
 
     const openGoogleDrivePicker = () => {
-        if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes("YOUR_")) {
-            // Fallback popup if Client ID is not initialized yet
-            const width = 850;
-            const height = 650;
-            const left = Math.max(0, (window.screen.width - width) / 2);
-            const top = Math.max(0, (window.screen.height - height) / 2);
-            window.open(
-                'https://drive.google.com',
-                'GoogleDrivePopup',
-                `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`
-            );
-            return;
-        }
-
-        setPickerLoading(true);
-
-        // Load GAPI & Google Picker API dynamically
-        const loadGapi = () => {
-            if (!window.gapi) {
-                const script = document.createElement("script");
-                script.src = "https://apis.google.com/js/api.js";
-                script.onload = () => {
-                    window.gapi.load("picker", createPicker);
-                };
-                document.body.appendChild(script);
-            } else {
-                window.gapi.load("picker", createPicker);
-            }
-        };
-
-        const createPicker = () => {
-            setPickerLoading(false);
-            if (!window.google || !window.google.picker) {
-                window.open('https://drive.google.com', '_blank');
-                return;
-            }
-            try {
-                const view = new window.google.picker.View(window.google.picker.ViewId.DOCS);
-                const picker = new window.google.picker.PickerBuilder()
-                    .addView(view)
-                    .setOAuthToken(GOOGLE_CLIENT_ID)
-                    .setDeveloperKey(GOOGLE_API_KEY)
-                    .setCallback((data) => {
-                        if (data.action === window.google.picker.Action.PICKED) {
-                            const doc = data.docs[0];
-                            if (doc && onAddDriveLink) {
-                                onAddDriveLink(doc.url || doc.id);
-                                setActiveView('main');
-                            }
-                        }
-                    })
-                    .build();
-                picker.setVisible(true);
-            } catch (err) {
-                console.error("Picker error:", err);
-                window.open('https://drive.google.com', '_blank');
-            }
-        };
-
-        loadGapi();
+        const width = 850;
+        const height = 650;
+        const left = Math.max(0, (window.screen.width - width) / 2);
+        const top = Math.max(0, (window.screen.height - height) / 2);
+        window.open(
+            'https://drive.google.com',
+            'GoogleDrivePopup',
+            `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`
+        );
     };
 
     const handleAddTextSubmit = (e) => {
@@ -208,13 +157,12 @@ const SourcesModal = ({
                                         type="button"
                                         className="submit-btn"
                                         onClick={openGoogleDrivePicker}
-                                        disabled={pickerLoading}
                                         style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px', width: 'fit-content' }}
                                     >
                                         <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
-                                            {pickerLoading ? 'sync' : 'open_in_new'}
+                                            open_in_new
                                         </span>
-                                        {pickerLoading ? 'Opening Google Drive...' : 'Open Google Drive Window'}
+                                        Open Google Drive Window
                                     </button>
 
                                     <p style={{ fontSize: '0.82rem', color: '#666666', margin: '0' }}>
