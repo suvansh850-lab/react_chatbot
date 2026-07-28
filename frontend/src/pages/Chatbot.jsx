@@ -258,17 +258,11 @@ const Chatbot = () => {
   const startNewChat = () => {
     setActiveNotebookId(null);
     setViewMode('chat');
-    setAttachedFiles([]);
-    const emptyChat = chats.find(c => c.loaded && !c.history.some(m => m.role === "user"));
-    if (emptyChat) {
-      setActiveChatId(emptyChat.id);
-      if (window.innerWidth <= 768) setIsSidebarOpen(false);
-      return;
-    }
-
     const newId = Date.now().toString();
-    setChats(prev => [{ id: newId, title: "New Chat", history: [{ hideInChat: true, role: "model", text: CompanyInfo }], loaded: true }, ...prev]);
+    setChats(prev => [{ id: newId, title: "New Chat", notebookId: null, history: [{ hideInChat: true, role: "model", text: CompanyInfo }], loaded: true }, ...prev]);
     setActiveChatId(newId);
+    setActiveNotebookId(null);
+    setViewMode('chat');
     if (window.innerWidth <= 768) setIsSidebarOpen(false);
   };
 
@@ -362,10 +356,20 @@ const Chatbot = () => {
     setIsUploading(true);
     
     let currentChatId = activeChatId;
-    if (!currentChatId) {
+    let currentChat = chats.find(c => c.id === currentChatId);
+
+    if (!currentChat || (activeNotebookId && currentChat.notebookId !== activeNotebookId)) {
       currentChatId = Date.now().toString();
+      const title = activeNotebook ? activeNotebook.title : "New Chat";
+      currentChat = {
+        id: currentChatId,
+        title: title,
+        notebookId: activeNotebookId || null,
+        history: [{ hideInChat: true, role: "model", text: CompanyInfo }],
+        loaded: true
+      };
+      setChats(prev => [currentChat, ...prev]);
       setActiveChatId(currentChatId);
-      setChats(prev => [{ id: currentChatId, title: "New Chat", history: [{ hideInChat: true, role: "model", text: CompanyInfo }], loaded: true }, ...prev]);
     }
     
     const formData = new FormData();
@@ -385,11 +389,12 @@ const Chatbot = () => {
         setAttachedFiles(prev => [...prev, data.fileName]);
         
         if (activeNotebookId) {
+          const cleanParsedText = (data.parsedText || "").replace(/\0/g, "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, "");
           addSourceToNotebook(activeNotebookId, {
             id: Date.now(),
             name: file.name,
             type: 'file',
-            content: data.parsedText || `File name: ${file.name}`
+            content: cleanParsedText || `File name: ${file.name}`
           });
         }
 
