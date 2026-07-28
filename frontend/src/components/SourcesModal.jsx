@@ -1,8 +1,10 @@
 import React, { useState, useRef } from 'react';
 import './SourcesModal.css';
 
-// Google Drive API Configuration (Configured in environment variables / code)
+// ── Google Drive API Credentials ──────────────────────────────
+// Read from environment variables (never hardcode secrets in source files)
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+const GOOGLE_CLIENT_SECRET = import.meta.env.VITE_GOOGLE_CLIENT_SECRET || "";
 const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || "";
 
 const SourcesModal = ({
@@ -18,7 +20,6 @@ const SourcesModal = ({
     const fileInputRef = useRef();
     const [activeView, setActiveView] = useState('main'); // 'main' | 'text' | 'drive'
     const [copiedText, setCopiedText] = useState('');
-    const [textTitle, setTextTitle] = useState('');
     const [driveUrl, setDriveUrl] = useState('');
 
     if (!isOpen) return null;
@@ -41,12 +42,13 @@ const SourcesModal = ({
 
     const handleAddTextSubmit = (e) => {
         e.preventDefault();
-        if (!copiedText.trim()) return;
+        const text = copiedText.trim();
+        if (!text) return;
+        const autoTitle = text.split('\n')[0].substring(0, 30) || 'Copied Note';
         if (onAddTextNote) {
-            onAddTextNote(textTitle.trim() || 'Copied Note', copiedText.trim());
+            onAddTextNote(autoTitle, text);
         }
         setCopiedText('');
-        setTextTitle('');
         setActiveView('main');
     };
 
@@ -122,20 +124,14 @@ const SourcesModal = ({
                             <form className="source-form-view" onSubmit={handleAddTextSubmit}>
                                 <h3>Add Copied Text / Note</h3>
                                 <p>Paste notes or raw text directly into your notebook:</p>
-                                <input
-                                    type="text"
-                                    className="source-input"
-                                    placeholder="Title (optional)"
-                                    value={textTitle}
-                                    onChange={(e) => setTextTitle(e.target.value)}
-                                />
                                 <textarea
                                     className="source-textarea"
                                     placeholder="Paste your text content here..."
                                     value={copiedText}
                                     onChange={(e) => setCopiedText(e.target.value)}
-                                    rows={6}
+                                    rows={8}
                                     required
+                                    autoFocus
                                 />
                                 <div className="source-form-actions">
                                     <button type="button" className="cancel-btn" onClick={() => setActiveView('main')}>Cancel</button>
