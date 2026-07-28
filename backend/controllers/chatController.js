@@ -259,6 +259,60 @@ async function parseWebsite(req, res) {
   }
 }
 
+async function parseGoogleDrive(req, res) {
+  const { url } = req.body;
+  if (!url) {
+    return res.status(400).json({ success: false, error: "URL is required" });
+  }
+
+  try {
+    const match = url.match(/(?:file\/d\/|document\/d\/|presentation\/d\/|spreadsheets\/d\/|id=)([a-zA-Z0-9_-]+)/);
+    const fileId = match ? match[1] : null;
+
+    if (!fileId) {
+      return res.status(400).json({ success: false, error: "Could not extract File ID from Google Drive URL." });
+    }
+
+    const exportUrl = `https://docs.google.com/document/d/${fileId}/export?format=txt`;
+    let response = await fetch(exportUrl);
+
+    if (!response.ok) {
+      const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+      response = await fetch(directUrl);
+    }
+
+    if (!response.ok) {
+      throw new Error("Make sure the Google Drive file permissions are set to 'Anyone with the link can view'.");
+    }
+
+    let textContent = await response.text();
+
+    if (textContent.includes("<!DOCTYPE html") || textContent.includes("<html")) {
+      textContent = textContent
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    const trimmedText = textContent.substring(0, 15000);
+
+    return res.json({
+      success: true,
+      fileId,
+      fileName: `Google Drive File (${fileId.substring(0, 8)})`,
+      text: trimmedText || "Google Drive Document Content Imported"
+    });
+  } catch (err) {
+    console.error("Google Drive parse error:", err.message);
+    return res.status(500).json({
+      success: false,
+      error: `Failed to fetch Google Drive content: ${err.message}`
+    });
+  }
+}
+
 module.exports = {
   handleChat,
   getConversations,
@@ -267,5 +321,6 @@ module.exports = {
   deleteConversation,
   uploadFile,
   getConversationFiles,
-  parseWebsite
+  parseWebsite,
+  parseGoogleDrive
 };

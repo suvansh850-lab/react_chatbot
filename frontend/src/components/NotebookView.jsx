@@ -66,9 +66,42 @@ const NotebookView = ({
         }
     };
 
-    const handleAddDriveLink = (link) => {
-        if (onAddSource) {
-            onAddSource({ id: Date.now(), name: link, type: 'file', content: `Google Drive Link: ${link}` });
+    const handleAddDriveLink = async (link) => {
+        try {
+            const getBackendRoot = () => {
+                if (import.meta.env.VITE_API_URL) {
+                    return import.meta.env.VITE_API_URL.replace(/\/$/, '').replace(/\/api$/, '') + '/api/chat';
+                }
+                return `${window.location.origin}/api/chat`;
+            };
+
+            const backendUrl = `${getBackendRoot()}/parse-google-drive`;
+            const res = await fetch(backendUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: link })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+                if (onAddSource) {
+                    onAddSource({
+                        id: Date.now(),
+                        name: data.fileName || link,
+                        type: 'file',
+                        content: `Google Drive Document Content:\n${data.text}`
+                    });
+                }
+            } else {
+                if (onAddSource) {
+                    onAddSource({ id: Date.now(), name: link, type: 'file', content: `Google Drive Link: ${link}` });
+                }
+            }
+        } catch (err) {
+            console.error("Google Drive import error:", err);
+            if (onAddSource) {
+                onAddSource({ id: Date.now(), name: link, type: 'file', content: `Google Drive Link: ${link}` });
+            }
         }
     };
 

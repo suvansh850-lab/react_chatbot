@@ -13,5 +13,6 @@ router.delete("/conversations/:id", chatController.deleteConversation);
 router.post("/conversations/:id/upload-file", upload.single("file"), chatController.uploadFile);
 router.get("/conversations/:id/files", chatController.getConversationFiles);
 router.post("/parse-website", chatController.parseWebsite);
+router.post("/parse-google-drive", chatController.parseGoogleDrive);
 
 module.exports = router;
