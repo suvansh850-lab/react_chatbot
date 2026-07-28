@@ -37,6 +37,10 @@ const SourcesModal = ({
     };
 
     const openGoogleDrivePicker = () => {
+        if (onClose) {
+            onClose();
+        }
+
         if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes("YOUR_")) {
             // If Client ID is missing, open Drive window
             const width = 850;
