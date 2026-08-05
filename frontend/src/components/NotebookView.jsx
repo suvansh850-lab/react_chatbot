@@ -23,6 +23,7 @@ const NotebookView = ({
     const MODELS = [
         { label: 'Groq (Cloud: Llama 3.3)', value: 'groq/llama-3.3-70b-versatile' },
         { label: 'Gemini (Cloud: Gemini 2.5)', value: 'gemini/gemini-2.5-flash' },
+        { label: 'Ollama (Offline: Gemma 2:2B)', value: 'ollama/gemma2:2b' },
         { label: 'Ollama (Offline: Llama 3.2)', value: 'ollama/llama3.2' },
         { label: 'Ollama (Offline: DeepSeek R1)', value: 'ollama/deepseek-r1' },
         { label: 'Ollama (Offline: Mistral)', value: 'ollama/mistral' },
