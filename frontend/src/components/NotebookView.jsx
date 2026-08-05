@@ -21,8 +21,11 @@ const NotebookView = ({
     const [isSourcesModalOpen, setIsSourcesModalOpen] = useState(false);
 
     const MODELS = [
-        { label: 'Groq', value: 'groq/llama-3.3-70b-versatile' },
-        { label: 'Gemini', value: 'gemini/gemini-2.5-flash' },
+        { label: 'Groq (Cloud: Llama 3.3)', value: 'groq/llama-3.3-70b-versatile' },
+        { label: 'Gemini (Cloud: Gemini 2.5)', value: 'gemini/gemini-2.5-flash' },
+        { label: 'Ollama (Offline: Llama 3.2)', value: 'ollama/llama3.2' },
+        { label: 'Ollama (Offline: DeepSeek R1)', value: 'ollama/deepseek-r1' },
+        { label: 'Ollama (Offline: Mistral)', value: 'ollama/mistral' },
     ];
 
     const currentModelLabel = MODELS.find(m => m.value === selectedModel)?.label || 'Groq';

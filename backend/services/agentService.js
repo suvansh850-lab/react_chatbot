@@ -232,7 +232,51 @@ async function runAgent(messages, conversationId, selectedModel = "groq/llama-3.
     const [provider, modelName] = selectedModel.split("/");
     let currentModel;
 
-    if (provider === "gemini") {
+    if (provider === "ollama") {
+      const ollamaHost = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
+      const targetModel = modelName || "llama3.2";
+
+      const invokeOllama = async (currentMsgs) => {
+        const formattedMsgs = currentMsgs.map(m => {
+          let role = "user";
+          if (m._getType() === "system") role = "system";
+          else if (m._getType() === "ai") role = "assistant";
+          const textContent = typeof m.content === "string" ? m.content : JSON.stringify(m.content);
+          return { role, content: textContent };
+        });
+
+        let resp;
+        try {
+          resp = await fetch(`${ollamaHost}/api/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: targetModel,
+              messages: formattedMsgs,
+              stream: false,
+              options: { temperature: 0.2 }
+            })
+          });
+        } catch (fetchErr) {
+          throw new Error(`Failed to connect to local Ollama instance at ${ollamaHost}. Please make sure Ollama is installed and running on your computer. (Error: ${fetchErr.message})`);
+        }
+
+        if (!resp.ok) {
+          const errText = await resp.text();
+          throw new Error(`Ollama Error (${resp.status}): ${errText}. Please ensure you have downloaded the model by running 'ollama run ${targetModel}' in your terminal.`);
+        }
+
+        const data = await resp.json();
+        return { content: data.message?.content || "" };
+      };
+
+      currentModel = {
+        invoke: invokeOllama,
+        bindTools: () => ({
+          invoke: invokeOllama
+        })
+      };
+    } else if (provider === "gemini") {
       try {
         const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
         const geminiApiKey = process.env.GEMINI_API_KEY;
@@ -263,7 +307,7 @@ async function runAgent(messages, conversationId, selectedModel = "groq/llama-3.
       });
     }
 
-    const currentModelWithTools = currentModel.bindTools(tools).withConfig({ tool_choice: "auto" });
+    const currentModelWithTools = provider === "ollama" ? currentModel : currentModel.bindTools(tools).withConfig({ tool_choice: "auto" });
 
     // Fetch uploaded files content for RAG analysis
     let fileContext = "";
